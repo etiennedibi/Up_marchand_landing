@@ -1,0 +1,55 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { CheckIcon } from "@/components/ui/icons";
+import { WAITLIST_COPY } from "@/content/waitlist";
+
+/**
+ * Chapeau de la page de liste d'attente marchands.
+ *
+ * Titre en .heading-lg — 44 à 76 px, Inter 500, serré à −0,06 em, interligne
+ * 0,95 — avec un souligné en vague animée sous le mot qui porte l'action.
+ * L'animation ne démarre qu'à l'entrée du titre dans l'écran, et une seule
+ * fois : elle ne tourne jamais dans le vide en bas de page.
+ *
+ * Le chapô est remplacé par une liste à coches. Trois engagements, un par
+ * ligne — ça se scanne avant de remplir quoi que ce soit.
+ */
+export function WaitlistIntro() {
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const node = heading.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        node.dataset.inview = "true";
+        observer.disconnect();
+      },
+      { threshold: 0.3 },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <header className="mb-12">
+      <h1 ref={heading} className="heading-lg underline-wave">
+        {WAITLIST_COPY.title.before}
+        <u>{WAITLIST_COPY.title.accent}</u>
+      </h1>
+
+      <ul className="form-checklist mt-12">
+        {WAITLIST_COPY.points.map((point) => (
+          <li key={point}>
+            <CheckIcon />
+            <span>{point}</span>
+          </li>
+        ))}
+      </ul>
+    </header>
+  );
+}

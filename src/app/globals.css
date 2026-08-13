@@ -1,0 +1,1847 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   UPMARCHAND — Jetons de design
+   Source : « UPMARCHAND — Direction artistique landing page » v1.0 (figée).
+   La §7.2 du CDC (#1B4F72 / #27AE60 / #F39C12) est caduque et remplacée ici.
+   Toute évolution passe par une nouvelle version de la DA, pas par une maquette.
+   ========================================================================== */
+
+@theme {
+  /* ---- Couleurs de marque (DA §2.1) ---------------------------------- */
+  --color-teal: #006d75; /* primaire — boutons, liens, titres de section */
+  --color-teal-hi: #0e9aa4; /* survols, tracés de carte — aplats seulement */
+  --color-teal-deep: #00565c;
+  --color-teal-soft: #e2f1f2; /* fond des chips actifs, encadrés */
+  --color-gold: #f2b705; /* accent — décoratif, jamais en texte sur blanc */
+  --color-gold-ink: #8a6800; /* version texte du doré sur fond clair */
+  --color-gold-soft: #fdf4da;
+  --color-ink: #062a2e; /* encre — titres, bandeaux sombres, footer */
+  --color-brand: #008a94; /* sarcelle claire — logotype et boutons ronds de la nav */
+
+  /* ---- Neutres et fonds (DA §2.2) ------------------------------------ */
+  --color-page: #fafaf8; /* blanc cassé légèrement chaud */
+  --color-alt: #eff5f5; /* sections alternées */
+  --color-line: #dde7e7;
+  --color-line-soft: #eaf1f1;
+  --color-body: #3a4b4c; /* texte courant, gris biaisé sarcelle */
+  --color-muted: #6b7e7f; /* légendes, libellés */
+
+  /* ---- Couleurs sémantiques (DA §2.3) -------------------------------- */
+  --color-ok: #1c6b47;
+  --color-ok-soft: #e1f1e9;
+  --color-crit: #a33323;
+  --color-crit-soft: #fbe9e5;
+
+  /* ---- Typographie (DA §3) ------------------------------------------- */
+  --font-display: var(--font-jakarta), "Segoe UI", system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Segoe UI", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), Consolas, ui-monospace, monospace;
+
+  /* ---- Mouvement (DA §6) — aucune autre valeur n'est autorisée -------- */
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ---- Ombres --------------------------------------------------------- */
+  --shadow-flat: 0 1px 2px rgb(6 42 46 / 0.05);
+  --shadow-lift: 0 1px 2px rgb(6 42 46 / 0.04), 0 14px 34px -22px rgb(6 42 46 / 0.5);
+  --shadow-pop: 0 2px 6px rgb(6 42 46 / 0.06), 0 28px 60px -30px rgb(6 42 46 / 0.55);
+  --shadow-cta: 0 8px 22px -10px rgb(0 109 117 / 0.75);
+  /* Ombre des maquettes : très diffuse, très basse en opacité. C'est ce qui les
+     fait flotter au-dessus de la carte au lieu d'y être collées. */
+  --shadow-mock: 0 2px 4px rgb(6 42 46 / 0.04), 0 18px 36px -18px rgb(6 42 46 / 0.3);
+
+  /* ---- Rythme --------------------------------------------------------- */
+  --spacing-nav: 4.75rem; /* hauteur de la barre de navigation : 76px */
+
+  /* ---- Animations nommées --------------------------------------------- */
+  --animate-brush: brush 900ms var(--ease-brand) 400ms forwards;
+
+  @keyframes brush {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+}
+
+/* ============================================================================
+   NAVBAR — grammaire MindMarket
+   Valeurs relevées dans le CSS de production de mindmarket.com, pas estimées.
+   Elle déroge volontairement à la DA §6 (180/240/600 ms, ease .22/1/.36/1) :
+   la référence a sa propre mécanique, fondée sur deux courbes et un rebond.
+   ========================================================================== */
+@theme {
+  --ease-nav: cubic-bezier(0.5, 0, 0, 1); /* --ease chez eux : sortie très franche */
+  --ease-bounce: cubic-bezier(0.17, 0.67, 0.3, 1.33); /* dépassement, pour les pastilles */
+}
+
+/* Mesures de la barre, au niveau racine : les pages en ont besoin pour réserver
+   la hauteur sous la barre fixe et pour aligner leurs colonnes sur les siennes. */
+:root {
+  --nav-h: 3.75rem; /* 60 px sous 1000 px */
+  --nav-gutter: 20px; /* --spacing-gutter */
+  --nav-radius: 10px; /* --radius-sm */
+  --nav-inset: 1rem;
+  --nav-text: clamp(1rem, 0.9783rem + 0.1087vw, 1.0625rem);
+  /* --spacing-safe-header chez eux : la barre plus son retrait. */
+  --nav-safe: calc(var(--nav-h) + var(--nav-inset));
+
+  /* Échelle de superposition — une seule source de vérité.
+     La barre est au sommet et le reste : elle doit rester atteignable quoi
+     qu'il arrive, y compris par-dessus un menu plein écran ou une section qui
+     se serait donné une couche à elle. Toute nouvelle couche se place ici,
+     jamais en dur dans un composant. */
+  --z-nav: 1000;
+  --z-overlay: 900;
+}
+@media (min-width: 1000px) {
+  :root {
+    --nav-h: 4rem; /* 64 px */
+  }
+}
+
+@layer components {
+  .nav-root {
+    position: fixed;
+    top: var(--nav-inset);
+    left: 0;
+    right: 0;
+    z-index: var(--z-nav);
+    padding-inline: var(--nav-inset);
+  }
+
+  /* Entrée : la barre descend de sa propre hauteur, 400 ms après 200 ms
+     d'attente. C'est la seule animation liée au chargement — la barre ne
+     s'escamote jamais au scroll. */
+  .nav-shell {
+    display: flex;
+    align-items: stretch;
+    gap: var(--nav-gutter);
+    transform: translate3d(0, -100%, 0) translate3d(0, calc(var(--nav-inset) * -1), 0);
+    transition: transform 400ms 200ms var(--ease-nav);
+  }
+  .nav-root[data-loaded="true"] .nav-shell {
+    transform: translate(0);
+  }
+
+  /* La barre se rétracte d'une colonne de la grille à 1200 px, de deux à 1600 :
+     elle n'est jamais collée aux bords. Les pages reprennent le même retrait
+     via .page-container, pour que tout soit aligné sur la même verticale. */
+  .nav-root,
+  .page-container,
+  .hero-inner {
+    padding-inline: var(--nav-inset);
+  }
+  @media (min-width: 1200px) {
+    .nav-root,
+    .page-container,
+    .hero-inner {
+      padding-inline: calc(6.25% + 18.75px);
+    }
+  }
+  @media (min-width: 1600px) {
+    .nav-root,
+    .page-container,
+    .hero-inner {
+      padding-inline: calc(12.5% + 17.5px);
+    }
+  }
+
+  .nav-bar {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--nav-h);
+    padding: 0 0.625rem 0 1rem;
+    background-color: var(--color-white);
+    border-radius: var(--nav-radius);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    gap: 1.5rem;
+  }
+
+  .nav-list {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    gap: 0.25rem;
+  }
+
+  .nav-item {
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
+  }
+  .nav-item:hover {
+    z-index: 3;
+  }
+
+  /* Lien : pastille qui apparaît en rebond au survol. */
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-height: 2.75rem;
+    padding-inline: 0.75rem;
+    border-radius: 50px;
+    /* Inter 500 à 16→17 px, interlettrage −0,04 em, interligne 1,25.
+       Relevé sur .c-menu-desktop_link_label. Le 500 n'est pas un choix de
+       composant chez eux : --font-sans-weight-normal vaut 500, c'est le poids
+       normal de tout leur site. */
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+    color: var(--color-ink);
+    white-space: nowrap;
+  }
+  .nav-link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50px;
+    background-color: var(--color-teal-soft);
+    opacity: 0;
+    transform: scale(0.8);
+    transition-property: transform, opacity;
+    transition-duration: 400ms, 100ms;
+    transition-timing-function: var(--ease-bounce), var(--ease-nav);
+  }
+  .nav-item:hover .nav-link::before,
+  .nav-link:focus-visible::before {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .nav-link > * {
+    position: relative;
+    z-index: 1;
+  }
+  @media (min-width: 1400px) {
+    .nav-link {
+      gap: 0.5rem;
+      padding-inline: 1rem;
+    }
+  }
+
+  .nav-chevron {
+    display: inline-block;
+    transition: transform 400ms var(--ease-bounce);
+  }
+  .nav-item[data-open="true"] .nav-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Bouton rond : deux pastilles superposées. Au survol, la sarcelle se rétracte
+     et une pastille blanche prend sa place — le bouton se fond dans la carte,
+     seule l'icône reste. C'est l'effet de la référence, transposé à nos fonds. */
+  .nav-round {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    color: var(--color-ink);
+  }
+  .nav-round::before,
+  .nav-round::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 100%;
+    transition:
+      transform 400ms var(--ease-bounce),
+      opacity 400ms var(--ease-nav),
+      background-color 250ms var(--ease-nav);
+  }
+  .nav-round::before {
+    background-color: var(--color-white);
+    transform: scale(0);
+  }
+  /* Doré : la seconde couleur de marque. L'icône reste en encre — sur un aplat
+     doré, c'est le seul contraste qui tient. */
+  .nav-round::after {
+    background-color: var(--color-gold);
+  }
+  .nav-round:hover::before {
+    transform: scale(1.05);
+  }
+  .nav-round:hover::after {
+    opacity: 0;
+    transform: scale(0);
+  }
+  .nav-round-icon {
+    position: relative;
+    z-index: 1;
+    width: 22px;
+    height: 22px;
+    transition: transform 200ms var(--ease-bounce);
+  }
+  .nav-round-icon.-close {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -11px 0 0 -11px;
+    transform: scale(0) rotate(0);
+  }
+  .nav-round:hover .nav-round-icon.-close {
+    transform: scale(1) rotate(-180deg);
+  }
+  .nav-round:hover .nav-round-icon.-open {
+    transform: scale(0) rotate(90deg);
+  }
+  .nav-round-slot {
+    margin-left: 0.5rem;
+  }
+  @media (min-width: 1400px) {
+    .nav-round-slot {
+      margin-left: 1rem;
+    }
+  }
+
+  /* Carte CTA : un aplat doré monte du bas en s'arrondissant. */
+  .nav-quote {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: none;
+    height: var(--nav-h);
+    padding-right: 0.625rem;
+    background-color: var(--color-white);
+    border-radius: var(--nav-radius);
+    clip-path: inset(0 round var(--nav-radius));
+  }
+  .nav-quote::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-gold);
+    transform-origin: bottom;
+    transform: scale(0.5, 0);
+    opacity: 0;
+    border-radius: 50% 50% 0 0;
+    transition:
+      transform 250ms var(--ease-nav),
+      border-radius 250ms var(--ease-nav),
+      opacity 250ms var(--ease-nav);
+  }
+  .nav-quote:hover::after {
+    opacity: 1;
+    transform: scale(1);
+    border-radius: var(--nav-radius) var(--nav-radius) 0 0;
+  }
+  .nav-quote > * {
+    position: relative;
+    z-index: 1;
+  }
+  /* Dans la carte CTA, la pastille ne joue pas le jeu de bascule du burger :
+     elle reste pleine pendant que l'aplat doré monte derrière elle. */
+  .nav-quote .nav-round {
+    color: var(--color-white);
+  }
+  .nav-quote .nav-round::before {
+    content: none;
+  }
+  /* La flèche part en sarcelle et passe à l'encre au survol, à contre-courant
+     de l'aplat doré qui monte derrière elle : les deux mouvements se répondent
+     au lieu de se confondre. */
+  .nav-quote .nav-round::after {
+    background-color: var(--color-brand);
+  }
+  .nav-quote:hover .nav-round::after {
+    opacity: 1;
+    transform: scale(1.05);
+    background-color: var(--color-ink);
+  }
+
+  .nav-quote-label {
+    padding-inline: 1.25rem;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+    color: var(--color-ink);
+    white-space: nowrap;
+  }
+
+  /* Logotype : chez eux le mot est un SVG de 128 × 19 px posé à côté d'une
+     marque de 34 px. Nos capitales sont calées sur cette hauteur de 19 px —
+     26 px de corps — pour que le bloc pèse le même poids optique.
+     L'interlettrage reste à −0,02 em : leur logotype est en bas-de-casse,
+     dix capitales à −0,04 em se toucheraient. */
+  .nav-wordmark {
+    font-size: 1.625rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  /* Panneau déroulant : il couvre toute la largeur de la barre. Le fond blanc
+     grandit en rebond de 0,97 à 1 pendant que le contenu monte de 16 px. */
+  .nav-dropdown {
+    position: absolute;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    padding-top: 0.5rem;
+    visibility: hidden;
+    transition: visibility 0s 200ms;
+  }
+  .nav-item[data-open="true"] .nav-dropdown {
+    visibility: visible;
+    transition-delay: 0s;
+  }
+  .nav-dropdown-inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+    opacity: 0;
+    transform: translate3d(0, 1rem, 0);
+    transition-property: transform, opacity;
+    transition-duration: 200ms, 100ms;
+    transition-timing-function: var(--ease-nav), var(--ease-nav);
+  }
+  .nav-dropdown-inner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-white);
+    border-radius: var(--nav-radius);
+    transform: scale(0.97);
+    transition: transform 400ms var(--ease-bounce);
+  }
+  .nav-item[data-open="true"] .nav-dropdown-inner {
+    opacity: 1;
+    transform: translate(0);
+  }
+  .nav-item[data-open="true"] .nav-dropdown-inner::before {
+    transform: scale(1);
+  }
+  .nav-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.15rem 1.25rem;
+    border-radius: var(--nav-radius);
+    background-color: var(--color-alt);
+    transition: background-color 200ms var(--ease-nav);
+  }
+  .nav-card:hover {
+    background-color: var(--color-teal-soft);
+  }
+  .nav-card-title {
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+  }
+  .nav-card-hint {
+    font-size: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem); /* --text-sm */
+    letter-spacing: -0.02em;
+    line-height: 1.35;
+  }
+  .nav-card-arrow {
+    transition: transform 400ms var(--ease-bounce);
+  }
+  .nav-card:hover .nav-card-arrow {
+    transform: translateX(4px);
+  }
+
+  /* ==========================================================================
+     PAGE FORMULAIRE — mise en page relevée sur /contact-us
+     Fond plein sur toute la hauteur, colonne unique centrée sur 8 des
+     16 colonnes de la grille, groupes de champs séparés par des filets.
+     ========================================================================== */
+  .page-container {
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--nav-gutter);
+  }
+  .form-col {
+    grid-column: 1 / -1;
+  }
+  @media (min-width: 768px) {
+    .form-grid {
+      grid-template-columns: repeat(16, 1fr);
+    }
+    .form-col {
+      grid-column: 5 / span 8;
+    }
+  }
+
+  .form-group {
+    padding-block: 2rem;
+    border-top: 1px solid var(--color-line);
+  }
+  .form-group:first-of-type {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .form-legend {
+    display: block;
+    margin-bottom: 1rem;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+    color: var(--color-ink);
+  }
+  .form-hint {
+    display: block;
+    margin-top: -0.65rem;
+    margin-bottom: 1rem;
+    font-size: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem);
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+
+  /* ==========================================================================
+     S1 — HERO
+     Photo pleine largeur en carte arrondie, titre calé en bas à gauche, cartes
+     blanches flottantes à droite. Le voile sombre part de la gauche : c'est lui
+     qui rend le titre lisible quelle que soit la photo posée derrière.
+     ========================================================================== */
+  /* Pleine largeur, depuis le tout premier pixel : la barre flotte par-dessus
+     au lieu de le pousser vers le bas. Le contenu étant calé en bas, il ne
+     passe jamais dessous. */
+  .hero {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 100svh;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .hero-media {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+  }
+  /* Voile : dense à gauche sous le texte, transparent à droite sous les cartes.
+     Le second dégradé assombrit le bas, où tombe le titre. */
+  .hero-veil {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(100deg, rgb(6 42 46 / 0.88) 0%, rgb(6 42 46 / 0.55) 45%, transparent 78%),
+      linear-gradient(to top, rgb(6 42 46 / 0.65) 0%, transparent 45%);
+  }
+  /* Le retrait latéral est celui de la barre : le titre tombe exactement sous
+     le logotype, les cartes sous le bouton du menu. */
+  .hero-inner {
+    display: grid;
+    gap: 2.5rem;
+    width: 100%;
+    padding-top: calc(var(--nav-safe) + 2rem);
+    padding-bottom: clamp(2rem, 1.4rem + 2.4vw, 4rem);
+  }
+  @media (min-width: 1024px) {
+    .hero-inner {
+      grid-template-columns: minmax(0, 1fr) 22rem;
+      align-items: end;
+      gap: 3.5rem;
+    }
+  }
+
+  .hero-title {
+    font-family: var(--font-sans);
+    /* Plafonné à 76 px : au-delà, « Partout dans le monde » déborde de la
+       colonne de gauche et se recoupe tout seul, ce qui ruinerait la coupe
+       voulue en trois lignes. */
+    font-size: clamp(2.125rem, 1.2rem + 3.6vw, 4.75rem); /* 34 → 76 px */
+    font-weight: 600;
+    letter-spacing: -0.055em;
+    line-height: 0.98;
+    color: var(--color-white);
+    text-wrap: balance;
+  }
+  .hero-lede {
+    max-width: 44ch;
+    margin-top: 1.25rem;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.5;
+    color: rgb(255 255 255 / 0.82);
+  }
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+  /* Bouton principal : pastille blanche pleine. Sur une photo, c'est le seul
+     traitement qui reste lisible quelle que soit l'image. */
+  .hero-cta {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.25rem;
+    padding: 0 0.5rem 0 1.5rem;
+    border-radius: 50px;
+    background-color: var(--color-white);
+    color: var(--color-ink);
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    transition: background-color 250ms var(--ease-nav);
+  }
+  .hero-cta:hover {
+    background-color: var(--color-gold);
+  }
+  .hero-cta-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 100%;
+    background-color: var(--color-brand);
+    color: var(--color-white);
+    transition:
+      transform 400ms var(--ease-bounce),
+      background-color 250ms var(--ease-nav);
+  }
+  .hero-cta:hover .hero-cta-icon {
+    transform: scale(1.08);
+    background-color: var(--color-ink);
+  }
+  .hero-link {
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: rgb(255 255 255 / 0.85);
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-thickness: 1px;
+    transition: color 180ms var(--ease-nav);
+  }
+  .hero-link:hover {
+    color: var(--color-white);
+  }
+
+  /* Cartes flottantes */
+  .hero-cards {
+    display: grid;
+    gap: 0.75rem;
+  }
+  /* Les cartes arrivent en cascade après le titre, puis se soulèvent au survol.
+     `backwards` et non `both` : sans ça, l'animation continuerait d'imposer sa
+     dernière image et écraserait le soulèvement au survol. */
+  .hero-card {
+    padding: 1.35rem 1.4rem 1.5rem;
+    border-radius: 14px;
+    background-color: var(--color-white);
+    box-shadow: var(--shadow-lift);
+    animation: card-rise 700ms var(--ease-nav) backwards;
+    transition:
+      transform 400ms var(--ease-bounce),
+      box-shadow 400ms var(--ease-nav);
+  }
+  .hero-card:nth-child(1) {
+    animation-delay: 250ms;
+  }
+  .hero-card:nth-child(2) {
+    animation-delay: 340ms;
+  }
+  .hero-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-pop);
+  }
+  .hero-stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.4rem;
+    font-family: var(--font-sans);
+    font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.25rem);
+    font-weight: 600;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .hero-stat small {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+  .hero-gauge {
+    height: 6px;
+    margin: 1rem 0 0.7rem;
+    border-radius: 50px;
+    background-color: var(--color-line);
+    overflow: hidden;
+  }
+  /* La largeur est posée par le rendu serveur puis rejouée depuis zéro par le
+     compteur : les deux avancent ensemble, la barre ne se remplit jamais avant
+     que le nombre l'ait rattrapée. */
+  .hero-gauge span {
+    display: block;
+    height: 100%;
+    border-radius: 50px;
+    background-color: var(--color-brand);
+  }
+  .hero-gauge-legend {
+    display: flex;
+    justify-content: space-between;
+    font-size: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem);
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+  .hero-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.75rem;
+    border-radius: 50px;
+    background-color: var(--color-gold-soft);
+    color: var(--color-gold-ink);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .hero-card-title {
+    margin-top: 0.9rem;
+    font-family: var(--font-sans);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 1.1;
+    color: var(--color-ink);
+  }
+  .hero-card-text {
+    margin-top: 0.6rem;
+    font-size: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem);
+    letter-spacing: -0.02em;
+    line-height: 1.5;
+    color: var(--color-muted);
+  }
+
+  /* ---- Flux de l'escrow ----------------------------------------------
+     Trois états reliés par un rail. Le rail se remplit de haut en bas, chaque
+     pastille s'allume à son passage et le libellé s'assombrit. La boucle dure
+     7,5 s — assez lent pour être lu, assez lent pour ne pas agiter la page.
+
+     L'état de repos est l'état *final* : rail plein, pastilles en sarcelle,
+     libellés en encre. L'animation ne fait que rejouer l'enchaînement depuis le
+     début. Sous mouvement réduit, il n'y a donc rien à réparer : la carte
+     affiche les trois états accomplis.
+     -------------------------------------------------------------------- */
+  .flow {
+    position: relative;
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1.1rem;
+    padding-left: 1.5rem;
+    list-style: none;
+  }
+  .flow::before,
+  .flow::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 0.55rem;
+    bottom: 0.55rem;
+    width: 2px;
+    border-radius: 2px;
+  }
+  .flow::before {
+    background-color: var(--color-line);
+  }
+  .flow::after {
+    background-color: var(--color-brand);
+    transform-origin: top;
+    animation: flow-rail 7.5s var(--ease-nav) infinite;
+  }
+  .flow-step {
+    position: relative;
+  }
+  .flow-dot {
+    position: absolute;
+    left: -1.5rem;
+    top: 0.3rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 100%;
+    background-color: var(--color-brand);
+    box-shadow: 0 0 0 3px var(--color-white);
+  }
+  .flow-label {
+    display: block;
+    font-size: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.4;
+    color: var(--color-ink);
+  }
+  .flow-step[data-step="1"] .flow-dot {
+    animation: flow-dot-1 7.5s var(--ease-nav) infinite;
+  }
+  .flow-step[data-step="2"] .flow-dot {
+    animation: flow-dot-2 7.5s var(--ease-nav) infinite;
+  }
+  .flow-step[data-step="3"] .flow-dot {
+    animation: flow-dot-3 7.5s var(--ease-nav) infinite;
+  }
+  .flow-step[data-step="1"] .flow-label {
+    animation: flow-label-1 7.5s var(--ease-nav) infinite;
+  }
+  .flow-step[data-step="2"] .flow-label {
+    animation: flow-label-2 7.5s var(--ease-nav) infinite;
+  }
+  .flow-step[data-step="3"] .flow-label {
+    animation: flow-label-3 7.5s var(--ease-nav) infinite;
+  }
+
+  .hero-card-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    margin-top: 1.1rem;
+    padding-inline: 1.15rem;
+    border-radius: 50px;
+    background-color: var(--color-brand);
+    color: var(--color-white);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    transition: background-color 250ms var(--ease-nav);
+  }
+  .hero-card-cta:hover {
+    background-color: var(--color-ink);
+  }
+
+  /* ==========================================================================
+     SECTIONS DE CONTENU
+     Bandeau centré — surtitre, titre, chapô — puis le contenu. Réutilisable
+     par toutes les sections S2 à S13.
+     ========================================================================== */
+  .section {
+    padding-block: clamp(4rem, 2.8rem + 5.2vw, 8rem);
+  }
+  .section-head {
+    max-width: 46rem;
+    margin-inline: auto;
+    margin-bottom: clamp(2.5rem, 1.9rem + 2.8vw, 4rem);
+    text-align: center;
+  }
+  /* Surtitre en pastille contournée : il se détache du fond de page sans peser,
+     là où un simple texte gris se confondrait avec le chapô. */
+  .section-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 1.05rem;
+    border-radius: 50px;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-white);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+  .section-title {
+    margin-top: 0.9rem;
+    font-family: var(--font-sans);
+    font-size: clamp(1.9rem, 1.35rem + 2.2vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.055em;
+    line-height: 1.02;
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+  .section-sub {
+    max-width: 52ch;
+    margin: 1.1rem auto 0;
+    font-size: var(--nav-text);
+    letter-spacing: -0.02em;
+    line-height: 1.55;
+    color: var(--color-muted);
+  }
+
+  /* ---- Grille en 3 + 2 -------------------------------------------------
+     Trois cartes égales, puis deux cartes larges. La rupture de rythme évite
+     la grille uniforme, où toutes les propositions se valent et où l'œil ne
+     s'arrête sur aucune.
+     -------------------------------------------------------------------- */
+  .bento {
+    display: grid;
+    gap: var(--nav-gutter); /* 20 px, la gouttière de la référence */
+  }
+  @media (min-width: 700px) {
+    .bento {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .bento {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+    .bento-card {
+      grid-column: span 2;
+    }
+    .bento-card:nth-child(n + 4) {
+      grid-column: span 3;
+    }
+  }
+
+  /* Aplat clair sans bordure, et surtout `overflow: hidden` : c'est lui qui
+     recadre la maquette. Pas de padding en bas — la maquette y descend et se
+     fait couper par le rayon de la carte. */
+  .bento-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 21rem;
+    padding: 2rem 2rem 0;
+    border-radius: 20px;
+    background-color: var(--color-alt);
+    overflow: hidden;
+  }
+  /* Proportions relevées sur la référence : les cartes étroites sont presque
+     carrées, les larges nettement plus basses. Le rapport est imposé plutôt
+     qu'une hauteur fixe, pour qu'il tienne à toutes les largeurs d'écran. */
+  @media (min-width: 1024px) {
+    .bento-card {
+      min-height: 0;
+      aspect-ratio: 252 / 269;
+    }
+    .bento-card:nth-child(n + 4) {
+      aspect-ratio: 387 / 253;
+    }
+  }
+
+  /* Icône dans une pastille blanche : elle ressort sur l'aplat gris sans
+     demander de couleur vive. */
+  .bento-icon-slot {
+    position: absolute;
+    top: 1.6rem;
+    right: 1.6rem;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 100%;
+    background-color: var(--color-white);
+    color: var(--color-brand);
+  }
+  .bento-icon-slot svg {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  /* Deux lignes, jamais trois. Les textes sont écrits pour tenir naturellement
+     dans cette hauteur ; le découpage n'est là que comme garde-fou aux largeurs
+     de colonne les plus étroites, autour de 1024 px. Il ne doit jamais se
+     déclencher — s'il se déclenche, c'est le texte qu'il faut raccourcir. */
+  .bento-title,
+  .bento-text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  /* La hauteur de deux lignes est réservée même quand le texte n'en occupe
+     qu'une : sans ça, les maquettes des cartes voisines ne démarrent pas à la
+     même hauteur et la rangée paraît bancale. */
+  .bento-title {
+    min-height: calc(2 * 1.25em);
+    padding-right: 2.75rem;
+    font-family: var(--font-sans);
+    font-size: 1.12rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+    color: var(--color-ink);
+  }
+  .bento-text {
+    min-height: calc(2 * 1.55em);
+    margin-top: 0.65rem;
+    max-width: 36ch;
+    font-size: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem);
+    letter-spacing: -0.02em;
+    line-height: 1.55;
+    color: var(--color-muted);
+  }
+
+  /* ---- Maquettes -------------------------------------------------------
+     Un fragment d'interface, pas une capture : rien à télécharger pour celles
+     qui sont dessinées — le budget images du CDC §6.2 reste tenu.
+
+     Comme dans la référence, la maquette occupe toute la hauteur restante et
+     vient affleurer le bas de la carte, sans rembourrage sous elle. C'est son
+     propre débordement qui recadre son contenu : on voit le haut d'un écran,
+     jamais un écran entier rétréci — une vignette qui rentre pile dans son
+     cadre a l'air d'un pictogramme.
+     -------------------------------------------------------------------- */
+  .bento-mock {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 7rem;
+    /* Elle démarre plus bas : le texte a de l'air au-dessus, et la maquette
+       montre d'autant moins d'écran — c'est le haut du fragment qui compte. */
+    margin-top: 4rem;
+    padding: 0.85rem;
+    border-radius: 14px 14px 0 0;
+    background-color: var(--color-white);
+    box-shadow: var(--shadow-mock);
+    overflow: hidden;
+    font-size: 0.72rem;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+    color: var(--color-body);
+    transition: transform 500ms var(--ease-bounce);
+  }
+  .bento-card:hover .bento-mock {
+    transform: translateY(-8px);
+  }
+
+  /* Variante pleine surface : la maquette porte son propre fond — une carte,
+     un tableau de bord — et n'a donc pas besoin du rembourrage blanc. */
+  .bento-mock.-flush {
+    padding: 0;
+  }
+
+  .bento-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .bento-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.68rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  /* Carte secondaire posée par-dessus la maquette, légèrement décalée : c'est
+     la superposition qui donne la profondeur, pas l'ombre seule. */
+  .bento-float {
+    position: absolute;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    background-color: var(--color-white);
+    box-shadow: var(--shadow-mock);
+  }
+
+  /* ==========================================================================
+     S6 — PILE DE CARTES CHIFFRÉES
+     Mécanique relevée sur la section « chiffres » de MindMarket : la colonne
+     de gauche reste collée à l'écran pendant que les cartes de droite défilent
+     et se recouvrent. Chaque carte se cale à son tour sous la barre, décalée de
+     quelques pixels par rapport à la précédente pour qu'on voie la pile.
+     ========================================================================== */
+  /* Bandeau pleine largeur : l'aplat va d'un bord à l'autre de l'écran, seul le
+     contenu reste aligné sur la trame du site via .page-container. Pas de rayon
+     — des coins arrondis coupés par le bord du viewport se lisent comme un
+     accident, pas comme une intention. */
+  .stack {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--color-alt);
+    padding-block: clamp(3rem, 2rem + 4vw, 6rem) clamp(3.5rem, 2.5rem + 4vw, 7rem);
+  }
+
+  /* Photographie de fond, sous l'aplat de couleur.
+     Fusion multiplicative : elle n'ajoute pas une image par-dessus la couleur,
+     elle assombrit la sarcelle là où elle est sombre. C'est ce qui la fait lire
+     comme une matière et non comme une photo mal effacée.
+
+     Le masque la cantonne à la moitié gauche et à la moitié basse : la colonne
+     de texte est collante et se libère très tôt, laissant dessous une grande
+     surface vide que rien n'occupe. C'est là, et nulle part ailleurs — surtout
+     pas derrière la pile de cartes. */
+  .stack-texture {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    object-fit: cover;
+    object-position: 20% 60%;
+    opacity: 0.11;
+    mix-blend-mode: multiply;
+    -webkit-mask-image: radial-gradient(52% 60% at 26% 74%, #000 0%, #000 22%, transparent 74%);
+    mask-image: radial-gradient(52% 60% at 26% 74%, #000 0%, #000 22%, transparent 74%);
+    pointer-events: none;
+  }
+
+  .stack-grid {
+    display: grid;
+    gap: var(--nav-gutter);
+  }
+  @media (min-width: 1024px) {
+    .stack-grid {
+      grid-template-columns: repeat(14, minmax(0, 1fr));
+    }
+    .stack-intro {
+      grid-column: 1 / 9;
+    }
+    .stack-list {
+      grid-column: 10 / 15;
+      /* La pile démarre plus bas que le titre : les premières cartes montent
+         dans le champ pendant que le titre est encore seul. */
+      padding-top: clamp(4rem, 2rem + 8vw, 12rem);
+    }
+    /* Collée sous la barre, elle accompagne toute la pile. */
+    .stack-intro-inner {
+      position: sticky;
+      top: calc(var(--nav-safe) + 3rem);
+    }
+  }
+
+  .stack-title {
+    margin-top: 1rem;
+    max-width: 14ch;
+    font-family: var(--font-sans);
+    font-size: clamp(2rem, 1.4rem + 2.6vw, 3.5rem);
+    font-weight: 500;
+    letter-spacing: -0.06em;
+    line-height: 0.98;
+    color: var(--color-ink);
+  }
+  .stack-text {
+    margin-top: 1.75rem;
+    max-width: 25rem;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+    color: var(--color-muted);
+    text-wrap: balance;
+  }
+
+  .stack-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .stack-card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    aspect-ratio: 450 / 550;
+    padding: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+    border-radius: 35px;
+  }
+
+  /* Illustration de carte.
+     Elle occupe le haut, là où la carte est vide, et s'efface en dégradé avant
+     d'atteindre le chiffre — une photographie sous un texte de 100 px le rend
+     illisible, quelle que soit son opacité. */
+  .stack-photo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    object-fit: cover;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 76%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 34%, transparent 76%);
+    pointer-events: none;
+  }
+  /* Sur la carte blanche, la photographie garde ses couleurs mais s'adoucit.
+     Le cadrage est décalé vers la droite : il met la main et le terminal au
+     centre, et repousse la face de la carte bancaire — qui porte la marque d'un
+     établissement tiers — vers le bord. */
+  .stack-card.-plain .stack-photo {
+    opacity: 0.92;
+    object-position: 64% 38%;
+  }
+  /* Sur l'aplat sarcelle, le mode « luminosité » ne conserve que les valeurs de
+     la photographie et lui emprunte la teinte de la carte : elle devient
+     sarcelle, la carte reste d'un seul ton. */
+  .stack-card.-teal .stack-photo {
+    mix-blend-mode: luminosity;
+    opacity: 0.55;
+    object-position: 50% 30%;
+  }
+  @media (min-width: 1024px) {
+    .stack-card {
+      position: sticky;
+      /* Décalage progressif : chaque carte s'arrête un cran plus bas que la
+         précédente, sinon la pile se lit comme une seule carte. */
+      top: calc(var(--nav-safe) + 2rem + var(--index) * 0.85rem);
+      border-radius: 50px;
+    }
+  }
+
+  /* Quatre habillages. La couleur de la pastille d'icône est l'inverse de celle
+     de la carte : c'est ce qui la fait exister sans ajouter de teinte. */
+  .stack-card.-plain {
+    background-color: var(--color-white);
+    color: var(--color-teal);
+  }
+  .stack-card.-teal {
+    background-color: var(--color-teal);
+    color: var(--color-white);
+  }
+  .stack-card.-ink {
+    background-color: var(--color-ink);
+    color: var(--color-white);
+  }
+  .stack-card.-gold {
+    background-color: var(--color-gold);
+    color: var(--color-ink);
+  }
+
+  .stack-icon {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 100%;
+    background-color: currentColor;
+    margin-left: auto;
+  }
+  .stack-icon svg {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+  .stack-card.-plain .stack-icon svg {
+    color: var(--color-white);
+  }
+  .stack-card.-teal .stack-icon svg {
+    color: var(--color-teal);
+  }
+  .stack-card.-ink .stack-icon svg {
+    color: var(--color-ink);
+  }
+  .stack-card.-gold .stack-icon svg {
+    color: var(--color-gold);
+  }
+
+  .stack-stat {
+    font-family: var(--font-sans);
+    font-size: clamp(3.5rem, 2rem + 6.5vw, 6.5rem);
+    font-weight: 400;
+    letter-spacing: -0.06em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+  }
+  .stack-stat span {
+    font-size: 0.42em;
+    letter-spacing: -0.03em;
+  }
+  .stack-card-title {
+    margin-top: 0.35rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+  }
+  .stack-card-text {
+    margin-top: 0.6rem;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+    opacity: 0.75;
+    text-wrap: balance;
+  }
+
+  /* Titre de page — .heading-lg chez eux : Inter 500, interlettrage −0,06 em,
+     interligne 0,95. La graisse est bien 500, pas 700 : c'est le serrage qui
+     fait la densité, pas le gras. */
+  .heading-lg {
+    font-size: clamp(2.75rem, 2.0543rem + 3.4783vw, 4.75rem); /* 44 → 76 px */
+    font-family: var(--font-sans);
+    font-weight: 500;
+    letter-spacing: -0.06em;
+    line-height: 0.95;
+    color: var(--color-ink);
+  }
+
+  /* Souligné en vague animée.
+     Ce n'est pas un SVG posé dans la page : c'est une barre de couleur pleine,
+     découpée par un masque en forme de vague. La taille du masque est négative,
+     ce qui retourne le motif, et sa position défile en boucle de 3 s — d'où
+     l'impression que la vague avance sous le mot. Le masque est répété en x,
+     donc la vague s'adapte à n'importe quelle longueur de texte.
+     L'animation est en pause tant que le titre n'est pas entré dans l'écran. */
+  .underline-wave {
+    --wave-speed: 3s;
+    --wave-h: 9.5px;
+    --wave-w: -30px;
+    --wave-bottom: -10px;
+    --wave-svg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 9.5'><path d='M0 3c7.5 0 7.5 3.8 15 3.8s7.5-3.8 15-3.8' fill='none' stroke='black' stroke-width='5'/></svg>");
+  }
+  @media (min-width: 700px) {
+    .underline-wave {
+      --wave-h: 20px;
+      --wave-w: -64px;
+      --wave-bottom: -16px;
+      --wave-svg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 20'><path d='M0 6c16 0 16 8 32 8s16-8 32-8' fill='none' stroke='black' stroke-width='10'/></svg>");
+    }
+  }
+  /* Variante réduite, pour les titres de section : le motif est à l'échelle du
+     texte, sinon un trait calibré pour 76 px écrase un titre de 48. */
+  @media (min-width: 700px) {
+    .underline-wave.-wave-sm {
+      --wave-h: 14px;
+      --wave-w: -45px;
+      --wave-bottom: -11px;
+      --wave-svg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 45 14'><path d='M0 4.2c11.25 0 11.25 5.6 22.5 5.6s11.25-5.6 22.5-5.6' fill='none' stroke='black' stroke-width='7'/></svg>");
+    }
+  }
+
+  .underline-wave u {
+    display: inline-block;
+    position: relative;
+    font-weight: inherit;
+    text-decoration: none;
+  }
+  .underline-wave u::after {
+    content: "";
+    position: absolute;
+    left: 0.08em;
+    right: -0.05em;
+    bottom: var(--wave-bottom);
+    height: var(--wave-h);
+    /* Doré : c'est la seconde couleur de marque, et la DA §2.1 lui réserve
+       précisément les soulignés. Purement décoratif — le titre reste lisible
+       sans lui, ce qui est indispensable puisque le doré ne passe pas le
+       contraste en texte. */
+    background-color: var(--color-gold);
+    -webkit-mask-image: var(--wave-svg);
+    mask-image: var(--wave-svg);
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
+    -webkit-mask-size: var(--wave-w) var(--wave-h);
+    mask-size: var(--wave-w) var(--wave-h);
+    animation: wave-scroll var(--wave-speed) linear infinite;
+    animation-play-state: paused;
+  }
+  .underline-wave[data-inview="true"] u::after {
+    animation-play-state: running;
+  }
+
+  /* Liste à cocher — même dessin que les cases de leur formulaire de contact :
+     un carré de 16 px, rayon 4 px, fond blanc, filet de 1 px, coche à
+     l'intérieur ; libellé en 500 à −0,04 em, écart de 10 px, alignés en tête. */
+  .form-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .form-checklist li {
+    display: inline-flex;
+    align-items: start;
+    gap: 10px;
+    padding: 5px 10px 5px 0;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+    color: var(--color-body);
+  }
+  .form-checklist svg {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.1rem;
+    padding: 2px;
+    border: 1px solid var(--color-line);
+    border-radius: 4px;
+    background-color: var(--color-white);
+    color: var(--color-brand);
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .form-field label {
+    font-size: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem);
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+  .form-field input,
+  .form-field select {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.75rem 1rem;
+    font-size: var(--nav-text);
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+    background-color: var(--color-white);
+    border: 1.5px solid var(--color-line);
+    border-radius: var(--nav-radius);
+    transition:
+      border-color 200ms var(--ease-nav),
+      box-shadow 200ms var(--ease-nav);
+  }
+  .form-field input::placeholder {
+    color: var(--color-muted);
+  }
+  .form-field input:focus,
+  .form-field select:focus {
+    outline: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px var(--color-teal-soft);
+  }
+  .form-field[data-invalid="true"] input,
+  .form-field[data-invalid="true"] select {
+    border-color: var(--color-crit);
+  }
+  .form-error {
+    font-size: 0.8rem;
+    letter-spacing: -0.02em;
+    color: var(--color-crit);
+  }
+
+  /* Choix : la pastille de la navbar, en version sélectionnable. Même rebond. */
+  .form-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .form-choice {
+    position: relative;
+    cursor: pointer;
+  }
+  .form-choice input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .form-choice span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 1.15rem;
+    border: 1.5px solid var(--color-line);
+    border-radius: 50px;
+    background-color: var(--color-white);
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    color: var(--color-ink);
+    transition:
+      transform 400ms var(--ease-bounce),
+      background-color 200ms var(--ease-nav),
+      border-color 200ms var(--ease-nav),
+      color 200ms var(--ease-nav);
+  }
+  .form-choice:hover span {
+    transform: scale(1.03);
+    border-color: var(--color-brand);
+  }
+  .form-choice input:checked + span {
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+    color: var(--color-white);
+  }
+  .form-choice input:focus-visible + span {
+    outline: 3px solid var(--color-gold);
+    outline-offset: 3px;
+  }
+
+  .form-consent {
+    display: grid;
+    grid-template-columns: 1.15rem 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    font-size: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem);
+    letter-spacing: -0.02em;
+    color: var(--color-body);
+    cursor: pointer;
+  }
+  .form-consent input {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.15rem;
+    accent-color: var(--color-brand);
+  }
+
+  /* Envoi : reprend l'aplat qui monte du bas, comme la carte CTA de la barre. */
+  .form-submit {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 3.5rem;
+    padding-inline: 1.5rem;
+    border-radius: var(--nav-radius);
+    background-color: var(--color-ink);
+    color: var(--color-white);
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .form-submit::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-brand);
+    transform-origin: bottom;
+    transform: scale(0.5, 0);
+    opacity: 0;
+    border-radius: 50% 50% 0 0;
+    transition:
+      transform 250ms var(--ease-nav),
+      border-radius 250ms var(--ease-nav),
+      opacity 250ms var(--ease-nav);
+  }
+  .form-submit:hover:not(:disabled)::after {
+    opacity: 1;
+    transform: scale(1);
+    border-radius: var(--nav-radius) var(--nav-radius) 0 0;
+  }
+  .form-submit > * {
+    position: relative;
+    z-index: 1;
+  }
+  .form-submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+/* Durées de transition (DA §6) — les seules valeurs autorisées :
+   duration-180 survols et focus · duration-240 accordéon, onglets, sous-menus ·
+   duration-600 apparition de section et cascade de cartes. Toujours associées à
+   `ease-brand`. Toute autre valeur est refusée en recette. */
+
+/* ============================================================================
+   TRANSITION DE PAGE
+   Reprise du comportement de MindMarket : la page qui arrive monte depuis le
+   bas et recouvre celle qui part, laquelle recule — elle rétrécit, descend un
+   peu et s'estompe. Durée 750 ms, même courbe que la barre.
+   Chez eux c'est swup ; ici c'est l'API View Transitions du navigateur, pilotée
+   par le <ViewTransition> de React. Aucune bibliothèque ajoutée.
+   ========================================================================== */
+::view-transition-group(.page-out) {
+  z-index: 0;
+}
+::view-transition-group(.page-in) {
+  z-index: 1;
+}
+::view-transition-old(.page-out),
+::view-transition-new(.page-in) {
+  /* Sans ça, les deux instantanés se mélangent en fondu additif au lieu de se
+     recouvrir franchement. */
+  mix-blend-mode: normal;
+}
+::view-transition-old(.page-out) {
+  animation: page-recede 750ms cubic-bezier(0.5, 0, 0, 1) both;
+}
+::view-transition-new(.page-in) {
+  animation: page-rise 750ms cubic-bezier(0.5, 0, 0, 1) both;
+}
+
+@keyframes page-rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes page-recede {
+  to {
+    transform: scale(0.9) translateY(10%);
+    opacity: 0.5;
+  }
+}
+
+/* La barre est retirée de l'animation : elle reste nette et immobile pendant
+   que les pages défilent dessous. Sans le display:none, l'ancien et le nouvel
+   instantané se superposeraient une fraction de seconde. */
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: var(--z-nav);
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+/* Les clics pendant la transition atteignent la page vivante au lieu de se
+   perdre dans le calque d'animation. */
+::view-transition {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* Le rail descend d'une pastille à l'autre : mi-hauteur à 34 %, pied à 62 %.
+   Il tient jusqu'à 94 %, puis s'efface — la reprise du cycle est invisible
+   puisqu'elle se fait sur un rail transparent. */
+@keyframes flow-rail {
+  0% {
+    transform: scaleY(0);
+    opacity: 1;
+  }
+  34% {
+    transform: scaleY(0.5);
+  }
+  62%,
+  94% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+}
+
+/* Chaque pastille s'éteint, puis s'allume au passage du rail avec un léger
+   dépassement d'échelle — le signal d'un état qui vient d'être franchi. */
+@keyframes flow-dot-1 {
+  0%,
+  4% {
+    background-color: var(--color-line);
+    transform: scale(1);
+  }
+  9% {
+    background-color: var(--color-brand);
+    transform: scale(1.45);
+  }
+  14%,
+  94% {
+    background-color: var(--color-brand);
+    transform: scale(1);
+  }
+  100% {
+    background-color: var(--color-line);
+    transform: scale(1);
+  }
+}
+@keyframes flow-dot-2 {
+  0%,
+  32% {
+    background-color: var(--color-line);
+    transform: scale(1);
+  }
+  37% {
+    background-color: var(--color-brand);
+    transform: scale(1.45);
+  }
+  42%,
+  94% {
+    background-color: var(--color-brand);
+    transform: scale(1);
+  }
+  100% {
+    background-color: var(--color-line);
+    transform: scale(1);
+  }
+}
+@keyframes flow-dot-3 {
+  0%,
+  60% {
+    background-color: var(--color-line);
+    transform: scale(1);
+  }
+  65% {
+    background-color: var(--color-gold);
+    transform: scale(1.45);
+  }
+  70%,
+  94% {
+    background-color: var(--color-gold);
+    transform: scale(1);
+  }
+  100% {
+    background-color: var(--color-line);
+    transform: scale(1);
+  }
+}
+
+/* Le libellé passe du gris à l'encre quand son état est atteint. */
+@keyframes flow-label-1 {
+  0%,
+  4% {
+    color: var(--color-muted);
+  }
+  12%,
+  94% {
+    color: var(--color-ink);
+  }
+  100% {
+    color: var(--color-muted);
+  }
+}
+@keyframes flow-label-2 {
+  0%,
+  32% {
+    color: var(--color-muted);
+  }
+  40%,
+  94% {
+    color: var(--color-ink);
+  }
+  100% {
+    color: var(--color-muted);
+  }
+}
+@keyframes flow-label-3 {
+  0%,
+  60% {
+    color: var(--color-muted);
+  }
+  68%,
+  94% {
+    color: var(--color-ink);
+  }
+  100% {
+    color: var(--color-muted);
+  }
+}
+
+@keyframes wave-scroll {
+  from {
+    -webkit-mask-position: 0 100%;
+    mask-position: 0 100%;
+  }
+  to {
+    -webkit-mask-position: var(--wave-w) 100%;
+    mask-position: var(--wave-w) 100%;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-page);
+    color: var(--color-body);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.62;
+    font-variant-numeric: lining-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  /* Focus visible sur doré : lisible sur fond clair comme sur l'encre. */
+  :focus-visible {
+    outline: 3px solid var(--color-gold);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: var(--color-gold);
+    color: #3a2b00;
+  }
+
+  @media (max-width: 767px) {
+    body {
+      font-size: 16px;
+    }
+  }
+}
+
+/* ---- Révélation au scroll (DA §6) -------------------------------------
+   Translation de 12 px vers le haut, jamais latérale. Déclenchée à 30 % de
+   visibilité par IntersectionObserver, une seule fois par élément.
+   ---------------------------------------------------------------------- */
+@layer utilities {
+  .reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity 600ms var(--ease-brand),
+      transform 600ms var(--ease-brand);
+  }
+
+  .reveal[data-shown="true"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Mouvement réduit --------------------------------------------------
+   Aucune information n'est portée par le seul mouvement (DA §6).
+   ---------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* La vague reste dessinée, mais elle cesse d'avancer : l'information —
+     « ce mot est mis en avant » — ne dépend pas du mouvement. */
+  .underline-wave u::after {
+    animation: none !important;
+  }
+
+  /* Le flux s'arrête sur son état final : rail plein, trois états franchis.
+     Rien n'est perdu, c'est la boucle qui disparaît. */
+  .flow::after,
+  .flow-dot,
+  .flow-label {
+    animation: none !important;
+  }
+}
