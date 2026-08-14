@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UI } from "@/content/ui";
+import { cn } from "@/lib/cn";
 import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 
 /**
@@ -19,7 +20,17 @@ import { LOCALES, LOCALE_LABELS, type Locale } from "@/lib/i18n";
  * `lang` est posé sur chaque lien pour que la synthèse vocale prononce « EN »
  * à l'anglaise et « FR » à la française.
  */
-export function LocaleSwitch({ locale }: { locale: Locale }) {
+export function LocaleSwitch({
+  locale,
+  className,
+  onSelect,
+}: {
+  locale: Locale;
+  className?: string;
+  /** Appelé au choix d'une langue — le menu plein écran s'en sert pour se
+   *  refermer : la navigation est côté client, l'ouverture y survivrait. */
+  onSelect?: () => void;
+}) {
   const pathname = usePathname();
 
   const swap = (next: Locale) => {
@@ -28,7 +39,7 @@ export function LocaleSwitch({ locale }: { locale: Locale }) {
   };
 
   return (
-    <div className="nav-locale" role="group" aria-label={UI[locale].language}>
+    <div className={cn("nav-locale", className)} role="group" aria-label={UI[locale].language}>
       {LOCALES.map((option) => (
         <Link
           key={option}
@@ -38,6 +49,7 @@ export function LocaleSwitch({ locale }: { locale: Locale }) {
           title={LOCALE_LABELS[option].full}
           aria-current={locale === option ? "true" : undefined}
           data-active={locale === option}
+          onClick={onSelect}
         >
           {LOCALE_LABELS[option].short}
         </Link>

@@ -19,9 +19,10 @@ import { ROUTES } from "@/lib/site";
  * 64 px (60 sous 1000 px), rayon 10 px, gouttière de 20 px entre les deux
  * cartes, liens de 44 px de haut en pastille, bouton rond de 40 px.
  *
- * Trois colonnes : logotype à gauche, liens au centre, actions à droite. La
- * colonne centrale est indépendante des deux autres, donc les liens restent
- * optiquement centrés quelle que soit la largeur du logotype.
+ * Trois colonnes : logotype à gauche, actions à droite, liens au centre. Les
+ * liens ne sont pas centrés sur la carte mais sur l'écran — la carte s'arrête
+ * avant le bouton d'appel, son milieu n'est pas celui de la page (voir
+ * `.nav-list` dans globals.css).
  *
  * La barre est fixe et le reste — elle ne s'escamote pas au scroll. Elle
  * descend une fois au chargement, 400 ms après un délai de 200 ms.
@@ -88,7 +89,10 @@ export function Navbar({ locale }: { locale: Locale }) {
             </div>
 
             <div className="nav-actions">
-              <LocaleSwitch locale={locale} />
+              {/* Sous 640 px, la barre porte déjà le logotype, le menu et
+                  l'appel à l'action : le sélecteur y devient à l'étroit. Il
+                  passe alors dans le menu plein écran, où il a la place. */}
+              <LocaleSwitch locale={locale} className="max-sm:hidden" />
 
               <button
                 type="button"

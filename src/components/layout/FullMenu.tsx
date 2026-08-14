@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LocaleSwitch } from "@/components/layout/LocaleSwitch";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { UI } from "@/content/ui";
 import { cn } from "@/lib/cn";
@@ -91,6 +92,16 @@ export function FullMenu({
           </div>
           <div className="mt-8 flex flex-col gap-1 text-[0.92rem] text-[#95AFB0]">
             <span>{SITE.countries.join(" · ")}</span>
+          </div>
+
+          {/* La langue vit ici aussi : sur mobile, c'est le seul endroit où
+              elle tient. Choisir referme le menu — la navigation est côté
+              client, sinon l'ouverture survivrait au changement de page. */}
+          <div className="mt-10">
+            <p className="mb-4 font-mono text-[0.7rem] tracking-[0.14em] text-gold uppercase">
+              {t.language}
+            </p>
+            <LocaleSwitch locale={locale} className="-dark" onSelect={onNavigate} />
           </div>
         </Column>
       </div>
