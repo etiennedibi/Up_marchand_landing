@@ -1,6 +1,9 @@
 import Image, { type StaticImageData } from "next/image";
 import carteEscrow from "@/assets/photos/carte-escrow.jpg";
+import carteLivraison from "@/assets/photos/carte-livraison.jpg";
 import cartePaiement from "@/assets/photos/carte-paiement.jpg";
+import carteReputation from "@/assets/photos/carte-reputation.jpg";
+import carteWhatsapp from "@/assets/photos/carte-whatsapp.jpg";
 import fondMarche from "@/assets/photos/fond-marche.jpg";
 import {
   ChatIcon,
@@ -11,6 +14,7 @@ import {
 } from "@/components/ui/icons";
 import { WaveHeading } from "@/components/ui/WaveHeading";
 import { FEATURES } from "@/content/features";
+import type { Locale } from "@/lib/i18n";
 
 /**
  * S6 — Les différenciateurs.
@@ -26,15 +30,24 @@ import { FEATURES } from "@/content/features";
 const ICONS = [LockIcon, CoinsIcon, StarIcon, ChatIcon, TruckIcon];
 
 /**
- * Illustrations, sur les deux premières cartes seulement.
+ * Une illustration par carte, dans l'ordre de la pile.
  *
- * Les deux ouvrent la pile, ce sont elles qui doivent retenir. Les suivantes
- * restent en aplat : cinq photographies enchaînées feraient une galerie, et le
- * chiffre — qui est le sujet de la section — n'aurait plus la parole.
+ * Chacune est traitée selon l'habillage de sa carte : couleurs conservées sur
+ * les cartes blanches, bichrome en mode « luminosité » sur les aplats — la
+ * photographie emprunte alors la teinte de la carte au lieu de lui en imposer
+ * une seconde. Le dégradé l'efface avant le chiffre, qui reste le sujet.
  */
-const PHOTOS: (StaticImageData | null)[] = [carteEscrow, cartePaiement, null, null, null];
+const PHOTOS: (StaticImageData | null)[] = [
+  carteEscrow,
+  cartePaiement,
+  carteReputation,
+  carteWhatsapp,
+  carteLivraison,
+];
 
-export function Features() {
+export function Features({ locale }: { locale: Locale }) {
+  const copy = FEATURES[locale];
+
   return (
     <section id="fonctionnalites" className="stack scroll-mt-[var(--nav-safe)]">
       {/* Décorative : le contenu de la section ne dépend en rien d'elle. */}
@@ -44,17 +57,17 @@ export function Features() {
         <div className="stack-grid">
           <div className="stack-intro">
             <div className="stack-intro-inner">
-              <p className="section-eyebrow">{FEATURES.eyebrow}</p>
+              <p className="section-eyebrow">{copy.eyebrow}</p>
               <WaveHeading className="stack-title -wave-sm">
-                {FEATURES.title.before}
-                <u>{FEATURES.title.accent}</u>
+                {copy.title.before}
+                <u>{copy.title.accent}</u>
               </WaveHeading>
-              <p className="stack-text">{FEATURES.text}</p>
+              <p className="stack-text">{copy.text}</p>
             </div>
           </div>
 
           <div className="stack-list">
-            {FEATURES.cards.map((card, index) => {
+            {copy.cards.map((card, index) => {
               const Icon = ICONS[index];
               const photo = PHOTOS[index];
               return (

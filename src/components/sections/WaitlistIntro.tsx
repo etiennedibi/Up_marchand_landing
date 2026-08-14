@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { CheckIcon } from "@/components/ui/icons";
-import { WAITLIST_COPY } from "@/content/waitlist";
+import { WAITLIST } from "@/content/waitlist";
+import type { Locale } from "@/lib/i18n";
 
 /**
  * Chapeau de la page de liste d'attente marchands.
@@ -15,7 +16,8 @@ import { WAITLIST_COPY } from "@/content/waitlist";
  * Le chapô est remplacé par une liste à coches. Trois engagements, un par
  * ligne — ça se scanne avant de remplir quoi que ce soit.
  */
-export function WaitlistIntro() {
+export function WaitlistIntro({ locale }: { locale: Locale }) {
+  const copy = WAITLIST[locale];
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -38,12 +40,12 @@ export function WaitlistIntro() {
   return (
     <header className="mb-12">
       <h1 ref={heading} className="heading-lg underline-wave">
-        {WAITLIST_COPY.title.before}
-        <u>{WAITLIST_COPY.title.accent}</u>
+        {copy.title.before}
+        <u>{copy.title.accent}</u>
       </h1>
 
       <ul className="form-checklist mt-12">
-        {WAITLIST_COPY.points.map((point) => (
+        {copy.points.map((point) => (
           <li key={point}>
             <CheckIcon />
             <span>{point}</span>

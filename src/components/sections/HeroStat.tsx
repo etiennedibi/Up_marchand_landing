@@ -16,7 +16,17 @@ import { useEffect, useRef } from "react";
  * L'animation écrit directement dans le DOM : aucun rendu React à 60 images par
  * seconde, ce qui compte sur les Android d'entrée de gamme visés par le CDC.
  */
-export function HeroStat({ taken, total }: { taken: number; total: number }) {
+export function HeroStat({
+  taken,
+  total,
+  unit,
+  remaining,
+}: {
+  taken: number;
+  total: number;
+  unit: string;
+  remaining: string;
+}) {
   const ratio = Math.round((taken / total) * 100);
   const number = useRef<HTMLSpanElement>(null);
   const bar = useRef<HTMLSpanElement>(null);
@@ -59,13 +69,17 @@ export function HeroStat({ taken, total }: { taken: number; total: number }) {
     <div className="hero-card">
       <p className="hero-stat">
         <span ref={number}>{taken}</span>
-        <small>/ {total} places</small>
+        <small>
+          / {total} {unit}
+        </small>
       </p>
       <div className="hero-gauge">
         <span ref={bar} style={{ width: `${ratio}%` }} />
       </div>
       <p className="hero-gauge-legend">
-        <span>{total - taken} places restantes</span>
+        <span>
+          {total - taken} {remaining}
+        </span>
         <span>{ratio} %</span>
       </p>
     </div>

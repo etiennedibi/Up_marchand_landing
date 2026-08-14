@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { FullMenu } from "@/components/layout/FullMenu";
-import { ArrowRightIcon, ChevronDownIcon, CloseIcon, MenuIcon } from "@/components/ui/icons";
+import { LocaleSwitch } from "@/components/layout/LocaleSwitch";
+import { ArrowRightIcon, CloseIcon, MenuIcon } from "@/components/ui/icons";
 import { Logo } from "@/components/ui/Logo";
+import { UI } from "@/content/ui";
 import { track } from "@/lib/analytics";
-import { NAV_ITEMS, type NavItem } from "@/lib/navigation";
-import { setPersona } from "@/lib/persona";
-import { ANCHORS, ROUTES } from "@/lib/site";
+import { localePath, type Locale } from "@/lib/i18n";
+import { navItems } from "@/lib/navigation";
+import { ROUTES } from "@/lib/site";
 
 /**
  * S0 — Barre de navigation, calquée sur mindmarket.com.
@@ -17,21 +19,17 @@ import { ANCHORS, ROUTES } from "@/lib/site";
  * 64 px (60 sous 1000 px), rayon 10 px, gouttière de 20 px entre les deux
  * cartes, liens de 44 px de haut en pastille, bouton rond de 40 px.
  *
- * Comportement, dans leur ordre d'importance :
- * 1. La barre est fixe et le reste. Elle ne s'escamote pas au scroll — elle
- *    descend une fois au chargement, 400 ms après un délai de 200 ms.
- * 2. Les panneaux s'ouvrent au survol de l'entrée, sans latence, et couvrent
- *    toute la largeur de la barre. Fermeture au départ du curseur, à Échap,
- *    au clic à l'extérieur, ou quand le focus quitte la barre.
- * 3. Le clavier ouvre au focus et referme en sortant — jamais de piège.
+ * Trois colonnes : logotype à gauche, liens au centre, actions à droite. La
+ * colonne centrale est indépendante des deux autres, donc les liens restent
+ * optiquement centrés quelle que soit la largeur du logotype.
  *
- * Toute la mise en forme est dans globals.css (`.nav-*`) : les valeurs y sont
- * regroupées pour être comparées d'un coup d'œil avec la référence.
+ * La barre est fixe et le reste — elle ne s'escamote pas au scroll. Elle
+ * descend une fois au chargement, 400 ms après un délai de 200 ms.
  */
-export function Navbar() {
+export function Navbar({ locale }: { locale: Locale }) {
   const root = useRef<HTMLDivElement>(null);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [fullMenu, setFullMenu] = useState(false);
+  const t = UI[locale];
 
   // Déclenche l'entrée de la barre après le premier rendu, comme leur classe
   // `is-first-loaded`. Écriture directe dans le DOM : aucun rendu React.
@@ -44,21 +42,10 @@ export function Navbar() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setOpenMenu(null);
-      setFullMenu(false);
+      if (event.key === "Escape") setFullMenu(false);
     };
-
-    const onPointerDown = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpenMenu(null);
-    };
-
     window.addEventListener("keydown", onKeyDown);
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      document.removeEventListener("pointerdown", onPointerDown);
-    };
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   useEffect(() => {
@@ -68,11 +55,7 @@ export function Navbar() {
     };
   }, [fullMenu]);
 
-  const handleNavigate = (item: NavItem) => {
-    if (item.persona) setPersona(item.persona);
-    setOpenMenu(null);
-    setFullMenu(false);
-  };
+  const close = () => setFullMenu(false);
 
   return (
     <>
@@ -82,39 +65,38 @@ export function Navbar() {
         // Point d'ancrage de la transition de page : la barre est extraite de
         // l'animation et ne bouge pas pendant que les pages défilent sous elle.
         style={{ viewTransitionName: "site-header" }}
-        // Le focus qui quitte la barre referme le panneau ouvert.
-        onBlur={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) setOpenMenu(null);
-        }}
       >
         <div className="nav-shell">
-          <nav aria-label="Navigation principale" className="nav-bar">
+          <nav aria-label={t.menu.navigate} className="nav-bar">
             {/* Le logotype entier — marque et mot — ramène à l'accueil. */}
-            <Link href={ROUTES.home} className="flex items-center" aria-label="UPMARCHAND, accueil">
+            <Link
+              href={localePath(locale, ROUTES.home)}
+              className="flex items-center"
+              aria-label={`UPMARCHAND, ${t.nav.home}`}
+            >
               <Logo />
             </Link>
 
-            <div className="nav-inner">
-              <div className="nav-list max-lg:hidden">
-                {NAV_ITEMS.map((item) => (
-                  <NavEntry
-                    key={item.label}
-                    item={item}
-                    open={openMenu === item.label}
-                    onOpen={() => setOpenMenu(item.label)}
-                    onClose={() => setOpenMenu(null)}
-                    onNavigate={handleNavigate}
-                  />
-                ))}
-              </div>
+            <div className="nav-list max-lg:hidden">
+              {navItems(locale).map((item) => (
+                <div key={item.href} className="nav-item">
+                  <Link href={localePath(locale, item.href)} onClick={close} className="nav-link">
+                    <span>{item.label}</span>
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            <div className="nav-actions">
+              <LocaleSwitch locale={locale} />
 
               <button
                 type="button"
                 aria-expanded={fullMenu}
                 aria-controls="menu-complet"
-                aria-label={fullMenu ? "Fermer le menu" : "Ouvrir le menu"}
+                aria-label={fullMenu ? t.menu.close : t.menu.open}
                 onClick={() => setFullMenu((open) => !open)}
-                className="nav-round nav-round-slot"
+                className="nav-round"
               >
                 <MenuIcon className="nav-round-icon -open" />
                 <CloseIcon className="nav-round-icon -close" />
@@ -123,11 +105,11 @@ export function Navbar() {
           </nav>
 
           <Link
-            href={ROUTES.waitlist}
-            onClick={() => track("nav_cta_clicked")}
+            href={localePath(locale, ROUTES.waitlist)}
+            onClick={() => track("nav_cta_clicked", { locale })}
             className="nav-quote"
           >
-            <span className="nav-quote-label max-sm:hidden">Liste d&apos;attente</span>
+            <span className="nav-quote-label max-sm:hidden">{t.nav.waitlist}</span>
             <span className="nav-round">
               <ArrowRightIcon className="nav-round-icon" />
             </span>
@@ -135,100 +117,7 @@ export function Navbar() {
         </div>
       </div>
 
-      <FullMenu open={fullMenu} onNavigate={handleNavigate} onClose={() => setFullMenu(false)} />
+      <FullMenu locale={locale} open={fullMenu} onNavigate={close} onClose={close} />
     </>
-  );
-}
-
-function NavEntry({
-  item,
-  open,
-  onOpen,
-  onClose,
-  onNavigate,
-}: {
-  item: NavItem;
-  open: boolean;
-  onOpen: () => void;
-  onClose: () => void;
-  onNavigate: (item: NavItem) => void;
-}) {
-  if (!item.children) {
-    return (
-      <div className="nav-item">
-        <a href={item.href} onClick={() => onNavigate(item)} className="nav-link">
-          <span>{item.label}</span>
-        </a>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="nav-item"
-      data-open={open || undefined}
-      onMouseEnter={onOpen}
-      onMouseLeave={onClose}
-    >
-      <a
-        href={item.href}
-        onClick={() => onNavigate(item)}
-        onFocus={onOpen}
-        aria-expanded={open}
-        className="nav-link"
-      >
-        <span>{item.label}</span>
-        <ChevronDownIcon className="nav-chevron size-4" />
-      </a>
-
-      <div className="nav-dropdown">
-        <div className="nav-dropdown-inner">
-          {item.children.map((child) => (
-            <a
-              key={child.label}
-              href={child.href}
-              onClick={() => onNavigate(item)}
-              tabIndex={open ? undefined : -1}
-              className="nav-card"
-            >
-              <span className="nav-card-title text-ink">{child.label}</span>
-              <span className="nav-card-hint text-muted">{child.hint}</span>
-              <span className="nav-card-hint mt-2 flex items-center gap-2 font-medium text-brand">
-                Voir <ArrowRightIcon className="nav-card-arrow size-3.5" />
-              </span>
-            </a>
-          ))}
-
-          {/* Troisième colonne : la référence termine ses panneaux par une carte
-              d'appel. Elle comble aussi la grille quand l'entrée n'a que deux
-              enfants. La liste d'attente ne s'adressant qu'aux marchands, la
-              carte du panneau acheteurs renvoie vers la FAQ, pas vers un
-              formulaire qui ne les concerne pas. */}
-          {item.children.length < 3 && (
-            <Link
-              href={item.persona === "acheteur" ? ANCHORS.faq : ROUTES.waitlist}
-              onClick={() => onNavigate(item)}
-              tabIndex={open ? undefined : -1}
-              className="nav-card !bg-ink"
-            >
-              <span className="nav-card-title text-white">
-                {item.persona === "acheteur"
-                  ? "Comment vous êtes protégé"
-                  : "Réserver ma place de marchand"}
-              </span>
-              <span className="nav-card-hint text-[#95AFB0]">
-                {item.persona === "acheteur"
-                  ? "Remboursement, délais de livraison, sécurité des paiements"
-                  : "Places de fondateur limitées avant le lancement"}
-              </span>
-              <span className="nav-card-hint mt-2 flex items-center gap-2 font-medium text-gold">
-                {item.persona === "acheteur" ? "Lire la FAQ" : "S'inscrire"}
-                <ArrowRightIcon className="nav-card-arrow size-3.5" />
-              </span>
-            </Link>
-          )}
-        </div>
-      </div>
-    </div>
   );
 }

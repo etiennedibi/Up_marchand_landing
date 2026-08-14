@@ -19,17 +19,22 @@ export const ROUTES = {
   home: "/",
   /** Liste d'attente — destination de tous les CTA « Rejoindre la liste ». */
   waitlist: "/rejoindre",
+  /** Les systèmes qui rendent les promesses tenables. */
+  ecosystem: "/ecosysteme",
+  /** La vision : ce que nous croyons, ce que nous refusons. */
+  philosophy: "/philosophie",
 } as const;
 
 /**
  * Ancres de la page d'accueil. Une seule source de vérité pour la nav et les CTA.
- * Chemins absolus : depuis /rejoindre, une ancre nue ne mènerait nulle part.
+ * Elles sont relatives à la racine : `localePath` leur ajoute la langue.
  */
 export const ANCHORS = {
   marchands: "/#marchands",
-  acheteurs: "/#acheteurs",
-  fonctionnement: "/#fonctionnement",
+  ecosysteme: "/#ecosysteme",
+  fonctionnalites: "/#fonctionnalites",
+  couverture: "/#couverture",
   tarifs: "/#tarifs",
+  frais: "/#frais",
   faq: "/#faq",
-  inscription: ROUTES.waitlist,
 } as const;

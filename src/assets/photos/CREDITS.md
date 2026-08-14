@@ -13,6 +13,17 @@ recommandée et la traçabilité est nécessaire en cas de contrôle.
 | `fond-marche.jpg` | `photo-1518219051733-d8d4fbbf9797` | Rue commerçante | Fond de la section S6, désaturé, 11 % d'opacité |
 | `carte-escrow.jpg` | `photo-1718010567947-4478d86294dc` | Paiement par carte sur un terminal | Carte « Système d'escrow », S6 |
 | `carte-paiement.jpg` | `photo-1662988836971-aefba0a7907a` | Femme souriante devant son téléphone | Carte « Moyens de paiement », S6 |
+| `carte-reputation.jpg` | `photo-1687422808384-c896d0efd4ab` | Cliente réglant son achat en boutique | Carte « Faux avis possible », S6 |
+| `carte-whatsapp.jpg` | `photo-1687422809654-579d81c29d32` | Commerçante avec son téléphone à son étal | Carte « Commerce WhatsApp », S6 |
+
+## Pexels
+
+Sous [licence Pexels](https://www.pexels.com/license/) : usage commercial
+autorisé, sans attribution obligatoire.
+
+| Fichier | Identifiant Pexels | Sujet | Usage |
+|---|---|---|---|
+| `carte-livraison.jpg` | `9461320` | Livreur consultant son téléphone, sac à la main | Carte « Livraison suivie », S6 |
 
 L'adresse d'une image se reconstruit ainsi :
 `https://images.unsplash.com/<identifiant>`

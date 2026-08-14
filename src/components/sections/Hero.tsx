@@ -3,6 +3,7 @@ import { HeroMedia } from "@/components/sections/HeroMedia";
 import { HeroStat } from "@/components/sections/HeroStat";
 import { ArrowRightIcon } from "@/components/ui/icons";
 import { FOUNDER_PLACES, HERO, HERO_CARD } from "@/content/hero";
+import { localePath, type Locale } from "@/lib/i18n";
 import { ANCHORS, ROUTES } from "@/lib/site";
 
 /**
@@ -14,12 +15,12 @@ import { ANCHORS, ROUTES } from "@/lib/site";
  *
  * Photo pleine largeur sur toute la hauteur de l'écran, depuis le premier
  * pixel : la barre flotte par-dessus. Titre calé en bas à gauche sur un voile
- * sombre, deux cartes blanches flottantes à droite. La première carte porte une
- * preuve chiffrée, la seconde un bénéfice avec son propre appel à l'action — le
- * visiteur a deux entrées possibles selon qu'il est convaincu par le chiffre ou
- * par la promesse.
+ * sombre, deux cartes blanches flottantes à droite.
  */
-export function Hero() {
+export function Hero({ locale }: { locale: Locale }) {
+  const copy = HERO[locale];
+  const card = HERO_CARD[locale];
+
   return (
     <section className="hero">
       <HeroMedia />
@@ -28,21 +29,21 @@ export function Hero() {
       <div className="hero-inner">
         <div>
           <h1 className="hero-title underline-wave" data-inview="true">
-            {HERO.title.lines.map((line) => (
+            {copy.title.lines.map((line) => (
               <span key={line} className="block">
                 {line}
               </span>
             ))}
             <span className="block">
-              <u>{HERO.title.accent}</u>
+              <u>{copy.title.accent}</u>
             </span>
           </h1>
 
-          <p className="hero-lede">{HERO.lede}</p>
+          <p className="hero-lede">{copy.lede}</p>
 
           <div className="hero-actions">
-            <Link href={ROUTES.waitlist} className="hero-cta">
-              <span>{HERO.cta}</span>
+            <Link href={localePath(locale, ROUTES.waitlist)} className="hero-cta">
+              <span>{copy.cta}</span>
               <span className="hero-cta-icon">
                 <ArrowRightIcon className="size-5" />
               </span>
@@ -55,21 +56,28 @@ export function Hero() {
               explicite — un chiffre non vérifiable se retire, il ne s'arrondit
               pas. Tant que la donnée n'existe pas, cette carte ne monte pas en
               production. */}
-          <HeroStat taken={FOUNDER_PLACES.taken} total={FOUNDER_PLACES.total} />
+          <HeroStat
+            taken={FOUNDER_PLACES.taken}
+            total={FOUNDER_PLACES.total}
+            unit={card.places.unit}
+            remaining={card.places.remaining}
+          />
 
           <div className="hero-card">
-            <span className="hero-chip">{HERO_CARD.chip}</span>
-            <p className="hero-card-title">{HERO_CARD.title}</p>
+            <span className="hero-chip">{card.chip}</span>
+            <p className="hero-card-title">{card.title}</p>
+
             <ol className="flow">
-              {HERO_CARD.flow.map((step, index) => (
+              {card.flow.map((step, index) => (
                 <li key={step} className="flow-step" data-step={index + 1}>
                   <span className="flow-dot" aria-hidden="true" />
                   <span className="flow-label">{step}</span>
                 </li>
               ))}
             </ol>
-            <Link href={ANCHORS.fonctionnement} className="hero-card-cta">
-              {HERO_CARD.cta}
+
+            <Link href={localePath(locale, ANCHORS.ecosysteme)} className="hero-card-cta">
+              {card.cta}
             </Link>
           </div>
         </aside>

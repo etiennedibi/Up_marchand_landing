@@ -2,20 +2,24 @@
 
 import { useState } from "react";
 import { ArrowRightIcon, CheckIcon } from "@/components/ui/icons";
-import { CATEGORIES, CHANNELS, CITIES, WAITLIST_COPY } from "@/content/waitlist";
+import {
+  CATEGORY_VALUES,
+  CHANNEL_VALUES,
+  CITY_VALUES,
+  WAITLIST,
+} from "@/content/waitlist";
 import { track } from "@/lib/analytics";
+import type { Locale } from "@/lib/i18n";
 
 /**
  * Formulaire de liste d'attente marchands.
  *
- * Mise en page reprise de la page de contact de MindMarket : fond plein sur
- * toute la hauteur, colonne unique centrée, et surtout des groupes de champs
- * séparés par des filets — les questions de qualification d'abord, les
- * coordonnées en dernier. On demande d'abord ce qui engage peu.
+ * Groupes de champs séparés par des filets : les questions de qualification
+ * d'abord, les coordonnées en dernier. On demande d'abord ce qui engage peu.
  *
- * Le formulaire ne s'adresse qu'aux marchands : pas de bascule d'audience, pas
- * de question sur le profil. Chaque question restante sert à qualifier le lead
- * ou à préparer l'accompagnement (CDC S11).
+ * Les libellés sont traduits, les valeurs envoyées au CRM ne le sont pas : une
+ * base segmentée sur des libellés traduits devient ingérable dès la deuxième
+ * langue.
  */
 type Errors = Partial<
   Record<"prenom" | "telephone" | "email" | "ville" | "categorie" | "consent", string>
@@ -24,7 +28,8 @@ type Errors = Partial<
 const RE_EMAIL = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 const RE_TEL = /^\+?[0-9\s().-]{8,20}$/;
 
-export function WaitlistForm() {
+export function WaitlistForm({ locale }: { locale: Locale }) {
+  const copy = WAITLIST[locale];
   const [categorie, setCategorie] = useState<string | null>(null);
   const [canal, setCanal] = useState<string | null>(null);
   const [errors, setErrors] = useState<Errors>({});
@@ -45,12 +50,12 @@ export function WaitlistForm() {
     const consent = data.get("consent") === "on";
 
     const found: Errors = {};
-    if (prenom.length < 2) found.prenom = "Indiquez votre prénom.";
-    if (!RE_TEL.test(telephone)) found.telephone = "Numéro invalide, indicatif pays compris.";
-    if (!RE_EMAIL.test(email)) found.email = "Adresse email invalide.";
-    if (!ville) found.ville = "Choisissez votre ville.";
-    if (!categorie) found.categorie = "Choisissez une catégorie.";
-    if (!consent) found.consent = "Votre accord est nécessaire pour vous écrire.";
+    if (prenom.length < 2) found.prenom = copy.errors.firstName;
+    if (!RE_TEL.test(telephone)) found.telephone = copy.errors.phone;
+    if (!RE_EMAIL.test(email)) found.email = copy.errors.email;
+    if (!ville) found.ville = copy.errors.city;
+    if (!categorie) found.categorie = copy.errors.category;
+    if (!consent) found.consent = copy.errors.consent;
 
     setErrors(found);
 
@@ -63,6 +68,7 @@ export function WaitlistForm() {
        Aucune donnée personnelle ne part vers l'analytics — ville et catégorie
        seulement, comme le prévoit le CDC §6.4. */
     console.info("[UPMARCHAND] à envoyer au CRM :", {
+      locale,
       persona: "marchand",
       prenom,
       telephone,
@@ -73,7 +79,7 @@ export function WaitlistForm() {
       utm: Object.fromEntries(new URLSearchParams(window.location.search)),
     });
 
-    track("form_completed", { persona: "marchand", ville, categorie: categorie ?? undefined });
+    track("form_completed", { locale, ville, categorie: categorie ?? undefined });
     setSent(true);
   };
 
@@ -84,12 +90,9 @@ export function WaitlistForm() {
           <CheckIcon className="size-7" />
         </span>
         <p className="heading-lg mt-8 text-[clamp(1.75rem,1.4rem+1.6vw,2.5rem)]">
-          Votre place est réservée.
+          {copy.success.title}
         </p>
-        <p className="mt-5 max-w-[46ch] text-body">
-          Un email de confirmation vient de partir. Nous vous écrivons sur WhatsApp dans les
-          prochains jours pour préparer votre boutique ensemble.
-        </p>
+        <p className="mt-5 max-w-[46ch] text-body">{copy.success.text}</p>
       </div>
     );
   }
@@ -101,31 +104,31 @@ export function WaitlistForm() {
       onChange={() => {
         if (started) return;
         setStarted(true);
-        track("form_started");
+        track("form_started", { locale });
       }}
     >
       <div className="absolute left-[-9999px]" aria-hidden="true">
         <label>
-          Ne pas remplir
+          Do not fill
           <input type="text" name="website" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
 
       {/* 1 — Ce que vend le marchand */}
       <fieldset className="form-group">
-        <legend className="form-legend">Que vendez-vous&nbsp;?</legend>
-        <span className="form-hint">Pour vous orienter vers les bons outils dès l&apos;ouverture.</span>
+        <legend className="form-legend">{copy.categoriesLegend}</legend>
+        <span className="form-hint">{copy.categoriesHint}</span>
         <div className="form-choices">
-          {CATEGORIES.map((value) => (
-            <label key={value} className="form-choice">
+          {copy.categories.map((label, index) => (
+            <label key={label} className="form-choice">
               <input
                 type="radio"
                 name="categorie"
-                value={value}
-                checked={categorie === value}
-                onChange={() => setCategorie(value)}
+                value={CATEGORY_VALUES[index]}
+                checked={categorie === CATEGORY_VALUES[index]}
+                onChange={() => setCategorie(CATEGORY_VALUES[index])}
               />
-              <span>{value}</span>
+              <span>{label}</span>
             </label>
           ))}
         </div>
@@ -134,18 +137,18 @@ export function WaitlistForm() {
 
       {/* 2 — Canal actuel : la question de qualification du CDC */}
       <fieldset className="form-group">
-        <legend className="form-legend">Où vendez-vous aujourd&apos;hui&nbsp;?</legend>
+        <legend className="form-legend">{copy.channelLegend}</legend>
         <div className="form-choices">
-          {CHANNELS.map((value) => (
-            <label key={value} className="form-choice">
+          {copy.channels.map((label, index) => (
+            <label key={label} className="form-choice">
               <input
                 type="radio"
                 name="canal"
-                value={value}
-                checked={canal === value}
-                onChange={() => setCanal(value)}
+                value={CHANNEL_VALUES[index]}
+                checked={canal === CHANNEL_VALUES[index]}
+                onChange={() => setCanal(CHANNEL_VALUES[index])}
               />
-              <span>{value}</span>
+              <span>{label}</span>
             </label>
           ))}
         </div>
@@ -153,16 +156,16 @@ export function WaitlistForm() {
 
       {/* 3 — Coordonnées */}
       <div className="form-group">
-        <span className="form-legend">Pour vous recontacter</span>
+        <span className="form-legend">{copy.contactLegend}</span>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="form-field" data-invalid={Boolean(errors.prenom)}>
-            <label htmlFor="prenom">Prénom</label>
+            <label htmlFor="prenom">{copy.firstName}</label>
             <input id="prenom" name="prenom" type="text" autoComplete="given-name" placeholder="Aïcha" />
             {errors.prenom && <p className="form-error">{errors.prenom}</p>}
           </div>
 
           <div className="form-field" data-invalid={Boolean(errors.telephone)}>
-            <label htmlFor="telephone">Numéro WhatsApp</label>
+            <label htmlFor="telephone">{copy.whatsapp}</label>
             <input
               id="telephone"
               name="telephone"
@@ -175,7 +178,7 @@ export function WaitlistForm() {
           </div>
 
           <div className="form-field" data-invalid={Boolean(errors.email)}>
-            <label htmlFor="email">Email</label>
+            <label htmlFor="email">{copy.email}</label>
             <input
               id="email"
               name="email"
@@ -187,10 +190,10 @@ export function WaitlistForm() {
           </div>
 
           <div className="form-field" data-invalid={Boolean(errors.ville)}>
-            <label htmlFor="ville">Ville</label>
+            <label htmlFor="ville">{copy.city}</label>
             <select id="ville" name="ville" defaultValue="">
-              <option value="">Sélectionner</option>
-              {CITIES.map((city) => (
+              <option value="">{copy.cityPlaceholder}</option>
+              {CITY_VALUES.map((city) => (
                 <option key={city}>{city}</option>
               ))}
             </select>
@@ -203,20 +206,17 @@ export function WaitlistForm() {
       <div className="form-group">
         <label className="form-consent">
           <input type="checkbox" name="consent" />
-          <span>
-            J&apos;accepte de recevoir des informations sur le lancement d&apos;UPMARCHAND. Je peux me
-            désabonner en un clic, à tout moment.
-          </span>
+          <span>{copy.consent}</span>
         </label>
         {errors.consent && <p className="form-error mt-2">{errors.consent}</p>}
 
         <button type="submit" className="form-submit mt-6">
-          <span>{WAITLIST_COPY.submit}</span>
+          <span>{copy.submit}</span>
           <ArrowRightIcon className="size-5" />
         </button>
 
         <p className="mt-4 text-center text-[0.82rem] tracking-[-0.02em] text-muted">
-          Vos données ne sont jamais revendues.
+          {copy.privacy}
         </p>
       </div>
     </form>

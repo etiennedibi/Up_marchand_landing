@@ -72,6 +72,8 @@
 @theme {
   --ease-nav: cubic-bezier(0.5, 0, 0, 1); /* --ease chez eux : sortie très franche */
   --ease-bounce: cubic-bezier(0.17, 0.67, 0.3, 1.33); /* dépassement, pour les pastilles */
+  /* Courbe relevée sur UPMAP, pour l'onde des points de carte. */
+  --ease-pulse: cubic-bezier(0.2, 0.6, 0.3, 1);
 }
 
 /* Mesures de la barre, au niveau racine : les pages en ont besoin pour réserver
@@ -146,28 +148,29 @@
     }
   }
 
+  /* Trois colonnes plutôt qu'un simple espacement : les colonnes latérales
+     partagent la place restante à parts égales, donc la colonne centrale tombe
+     au milieu de la barre quelle que soit la largeur du logotype. Avec
+     `space-between`, les liens se seraient collés au bouton. */
   .nav-bar {
     position: relative;
     flex-grow: 1;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     height: var(--nav-h);
     padding: 0 0.625rem 0 1rem;
     background-color: var(--color-white);
     border-radius: var(--nav-radius);
   }
-
-  .nav-inner {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    gap: 1.5rem;
+  .nav-bar > :last-child {
+    justify-self: end;
   }
 
   .nav-list {
     display: flex;
     align-items: center;
+    justify-self: center;
     height: 100%;
     gap: 0.25rem;
   }
@@ -230,14 +233,6 @@
     }
   }
 
-  .nav-chevron {
-    display: inline-block;
-    transition: transform 400ms var(--ease-bounce);
-  }
-  .nav-item[data-open="true"] .nav-chevron {
-    transform: rotate(180deg);
-  }
-
   /* Bouton rond : deux pastilles superposées. Au survol, la sarcelle se rétracte
      et une pastille blanche prend sa place — le bouton se fond dans la carte,
      seule l'icône reste. C'est l'effet de la référence, transposé à nos fonds. */
@@ -298,6 +293,45 @@
   .nav-round:hover .nav-round-icon.-open {
     transform: scale(0) rotate(90deg);
   }
+  /* Colonne de droite : le sélecteur de langue puis le bouton rond. */
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-self: end;
+  }
+
+  /* Sélecteur de langue : deux segments dans une pastille, la langue courante
+     en sarcelle pleine. Le contraste doit rester lisible à 12 px, d'où le poids
+     500 et l'interlettrage positif — l'inverse du reste de la barre, parce que
+     deux capitales serrées se confondent. */
+  .nav-locale {
+    display: inline-flex;
+    gap: 0.15rem;
+    padding: 0.2rem;
+    border-radius: 50px;
+    background-color: var(--color-alt);
+  }
+  .nav-locale a {
+    padding: 0.3rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: var(--color-muted);
+    transition:
+      background-color 250ms var(--ease-nav),
+      color 250ms var(--ease-nav);
+  }
+  .nav-locale a:hover {
+    color: var(--color-ink);
+  }
+  .nav-locale a[data-active="true"] {
+    background-color: var(--color-brand);
+    color: var(--color-white);
+  }
+
   .nav-round-slot {
     margin-left: 0.5rem;
   }
@@ -387,79 +421,6 @@
     line-height: 1;
   }
 
-  /* Panneau déroulant : il couvre toute la largeur de la barre. Le fond blanc
-     grandit en rebond de 0,97 à 1 pendant que le contenu monte de 16 px. */
-  .nav-dropdown {
-    position: absolute;
-    top: var(--nav-h);
-    left: 0;
-    right: 0;
-    padding-top: 0.5rem;
-    visibility: hidden;
-    transition: visibility 0s 200ms;
-  }
-  .nav-item[data-open="true"] .nav-dropdown {
-    visibility: visible;
-    transition-delay: 0s;
-  }
-  .nav-dropdown-inner {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    padding: 1rem;
-    opacity: 0;
-    transform: translate3d(0, 1rem, 0);
-    transition-property: transform, opacity;
-    transition-duration: 200ms, 100ms;
-    transition-timing-function: var(--ease-nav), var(--ease-nav);
-  }
-  .nav-dropdown-inner::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: var(--color-white);
-    border-radius: var(--nav-radius);
-    transform: scale(0.97);
-    transition: transform 400ms var(--ease-bounce);
-  }
-  .nav-item[data-open="true"] .nav-dropdown-inner {
-    opacity: 1;
-    transform: translate(0);
-  }
-  .nav-item[data-open="true"] .nav-dropdown-inner::before {
-    transform: scale(1);
-  }
-  .nav-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    padding: 1.15rem 1.25rem;
-    border-radius: var(--nav-radius);
-    background-color: var(--color-alt);
-    transition: background-color 200ms var(--ease-nav);
-  }
-  .nav-card:hover {
-    background-color: var(--color-teal-soft);
-  }
-  .nav-card-title {
-    font-size: var(--nav-text);
-    font-weight: 500;
-    letter-spacing: -0.04em;
-    line-height: 1.25;
-  }
-  .nav-card-hint {
-    font-size: clamp(0.75rem, 0.7065rem + 0.2174vw, 0.875rem); /* --text-sm */
-    letter-spacing: -0.02em;
-    line-height: 1.35;
-  }
-  .nav-card-arrow {
-    transition: transform 400ms var(--ease-bounce);
-  }
-  .nav-card:hover .nav-card-arrow {
-    transform: translateX(4px);
-  }
 
   /* ==========================================================================
      PAGE FORMULAIRE — mise en page relevée sur /contact-us
@@ -843,6 +804,15 @@
   .section {
     padding-block: clamp(4rem, 2.8rem + 5.2vw, 8rem);
   }
+  /* Deux sections claires qui se suivent additionnent leurs marges : près de
+     240 px à 1440 px, soit le double de ce qu'il faut. La seconde renonce donc
+     à sa marge haute, et l'intervalle redevient celui d'une seule section.
+     La règle ne s'applique qu'entre sections de même nature : après un bandeau
+     coloré — .eco, .stack — la suivante garde sa marge, car un aplat s'arrête
+     net à son bord et n'offre aucune respiration. */
+  .section + .section {
+    padding-top: 0;
+  }
   .section-head {
     max-width: 46rem;
     margin-inline: auto;
@@ -1183,6 +1153,20 @@
     opacity: 0.55;
     object-position: 50% 30%;
   }
+  /* Sur l'encre, le bichrome vire très sombre — l'opacité remonte pour que la
+     photographie reste lisible sans éclaircir la carte. */
+  .stack-card.-ink .stack-photo {
+    mix-blend-mode: luminosity;
+    opacity: 0.62;
+    object-position: 50% 22%;
+  }
+  /* Sur le doré, l'inverse : le bichrome est clair, il faut le retenir pour que
+     le texte en encre garde son contraste. */
+  .stack-card.-gold .stack-photo {
+    mix-blend-mode: luminosity;
+    opacity: 0.42;
+    object-position: 50% 26%;
+  }
   @media (min-width: 1024px) {
     .stack-card {
       position: sticky;
@@ -1264,6 +1248,933 @@
     line-height: 1.25;
     opacity: 0.75;
     text-wrap: balance;
+  }
+
+  /* ==========================================================================
+     S2 — LES MARQUES QUI NOUS FONT CONFIANCE
+     Bandes défilantes de pastilles, d'après .c-brands-section : un rond blanc
+     pour la marque, son nom à côté, le tout dans une pastille à rayon complet.
+     Aucun fichier logo n'est requis — utile tant que les chartes des partenaires
+     ne sont pas en notre possession.
+     ========================================================================== */
+  .brands-title {
+    max-width: 37.5rem;
+    margin-inline: auto;
+    text-align: center;
+    font-family: var(--font-sans);
+    font-size: clamp(1.75rem, 1.3rem + 1.9vw, 2.6rem);
+    font-weight: 500;
+    letter-spacing: -0.06em;
+    line-height: 1.15;
+    color: var(--color-ink);
+  }
+  .brands-rails {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    /* Les extrémités s'effacent : sans ça, les pastilles apparaissent et
+       disparaissent d'un coup au bord de l'écran. */
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  }
+  .rail {
+    display: block;
+    overflow: hidden;
+  }
+  .rail-track {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-right: 1rem;
+    width: max-content;
+    animation: rail-scroll var(--rail-duration, 40s) linear infinite;
+  }
+  .rail.-reverse .rail-track {
+    animation-direction: reverse;
+  }
+  .brands-rails:hover .rail-track {
+    animation-play-state: paused;
+  }
+  .brand-pill {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+    border-radius: 60px;
+    background-color: var(--color-alt);
+    white-space: nowrap;
+  }
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    flex: none;
+    border-radius: 100%;
+    background-color: var(--color-white);
+    color: var(--color-teal);
+  }
+  .brand-mark svg {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+  .brand-name {
+    font-size: 1.05rem;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+    color: var(--color-ink);
+  }
+  .brand-role {
+    display: block;
+    font-size: 0.82rem;
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+
+  /* ==========================================================================
+     S8 — TARIFS
+     Trois plans, celui du milieu surélevé avec un liseré doré. Bascule
+     mensuel / annuel, montants recalculés en 240 ms (DA §5).
+     ========================================================================== */
+  .billing-switch {
+    display: inline-flex;
+    gap: 0.2rem;
+    padding: 0.28rem;
+    border-radius: 50px;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-white);
+  }
+  .billing-switch button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 50px;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition:
+      background-color 240ms var(--ease-nav),
+      color 240ms var(--ease-nav);
+  }
+  .billing-switch button[aria-pressed="true"] {
+    background-color: var(--color-teal);
+    color: var(--color-white);
+  }
+  .billing-save {
+    padding: 0.1rem 0.45rem;
+    border-radius: 50px;
+    background-color: var(--color-gold-soft);
+    font-size: 0.65rem;
+    color: var(--color-gold-ink);
+  }
+  .billing-switch button[aria-pressed="true"] .billing-save {
+    background-color: rgb(255 255 255 / 0.2);
+    color: var(--color-white);
+  }
+
+  .plans {
+    display: grid;
+    gap: var(--nav-gutter);
+    align-items: start;
+  }
+  @media (min-width: 900px) {
+    .plans {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .plan {
+    display: flex;
+    flex-direction: column;
+    padding: 1.75rem 1.6rem 1.9rem;
+    border-radius: 24px;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-white);
+  }
+  /* Le plan retenu se distingue par un liseré doré et une élévation, pas par
+     une couleur de fond : il doit rester lisible, pas criard. */
+  .plan.-featured {
+    position: relative;
+    border: 2px solid var(--color-gold);
+    box-shadow: var(--shadow-pop);
+  }
+  @media (min-width: 900px) {
+    .plan.-featured {
+      transform: translateY(-1.25rem);
+      padding-top: 2.25rem;
+    }
+  }
+  .plan-ribbon {
+    position: absolute;
+    top: -0.85rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.3rem 0.9rem;
+    border-radius: 50px;
+    background-color: var(--color-gold);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+    white-space: nowrap;
+  }
+  .plan-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--color-ink);
+  }
+  .plan-pitch {
+    margin-top: 0.2rem;
+    font-size: 0.85rem;
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+  .plan-price {
+    margin-top: 1.1rem;
+    font-family: var(--font-sans);
+    font-size: 2.35rem;
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 1;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+    transition: opacity 240ms var(--ease-nav);
+  }
+  .plan-price.-swapping {
+    opacity: 0;
+  }
+  .plan-price small {
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+  .plan-commission {
+    display: inline-block;
+    margin-top: 0.9rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 8px;
+    background-color: var(--color-teal-soft);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-teal);
+  }
+  .plan-features {
+    display: grid;
+    gap: 0.55rem;
+    margin: 1.4rem 0 1.75rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--color-line-soft);
+  }
+  .plan-features li {
+    display: grid;
+    grid-template-columns: 1rem 1fr;
+    gap: 0.6rem;
+    align-items: start;
+    font-size: 0.9rem;
+    letter-spacing: -0.02em;
+    line-height: 1.45;
+    color: var(--color-body);
+  }
+  .plan-features svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    margin-top: 0.28rem;
+    color: var(--color-ok);
+  }
+  .plan-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    margin-top: auto;
+    padding-inline: 1.25rem;
+    border-radius: 50px;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    transition:
+      background-color 250ms var(--ease-nav),
+      color 250ms var(--ease-nav);
+  }
+  .plan-cta.-solid {
+    background-color: var(--color-teal);
+    color: var(--color-white);
+  }
+  .plan-cta.-solid:hover {
+    background-color: var(--color-ink);
+  }
+  .plan-cta.-outline {
+    border: 1.5px solid var(--color-line);
+    color: var(--color-ink);
+  }
+  .plan-cta.-outline:hover {
+    border-color: var(--color-teal);
+    color: var(--color-teal);
+  }
+
+  /* ==========================================================================
+     S12 — FAQ
+     Accordéon, une seule réponse ouverte à la fois, marqueur + / − sarcelle,
+     ouverture en 240 ms (DA §5).
+     ========================================================================== */
+  .faq {
+    max-width: 52rem;
+    margin-inline: auto;
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--color-line);
+  }
+  .faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    width: 100%;
+    padding: 1.35rem 0.25rem;
+    text-align: left;
+    font-size: 1.05rem;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.3;
+    color: var(--color-ink);
+    cursor: pointer;
+  }
+  .faq-marker {
+    display: grid;
+    place-items: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    flex: none;
+    border-radius: 100%;
+    border: 1.5px solid var(--color-teal);
+    color: var(--color-teal);
+    font-size: 1.1rem;
+    line-height: 1;
+    transition:
+      transform 240ms var(--ease-nav),
+      background-color 240ms var(--ease-nav),
+      color 240ms var(--ease-nav);
+  }
+  .faq-item[data-open="true"] .faq-marker {
+    /* Le + devient × par rotation : un seul glyphe, une seule animation. */
+    transform: rotate(135deg);
+    background-color: var(--color-teal);
+    color: var(--color-white);
+  }
+  .faq-answer {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 240ms var(--ease-nav);
+  }
+  .faq-item[data-open="true"] .faq-answer {
+    grid-template-rows: 1fr;
+  }
+  /* La ligne à 0fr écrase son contenu : l'enfant doit masquer le débordement,
+     sinon le texte reste visible replié. */
+  .faq-answer > div {
+    overflow: hidden;
+  }
+  .faq-answer p {
+    max-width: 60ch;
+    padding: 0 3rem 1.5rem 0.25rem;
+    font-size: var(--nav-text);
+    letter-spacing: -0.02em;
+    line-height: 1.6;
+    color: var(--color-body);
+  }
+
+  /* ==========================================================================
+     S13 — FOOTER
+     Encre pleine, coins arrondis en haut, quatre colonnes de liens et une bande
+     de bas de page. La respiration est celle du footer de MindMarket : très
+     généreuse, c'est une zone de repos et non un sommaire compressé.
+     ========================================================================== */
+  .footer {
+    position: relative;
+    overflow: hidden;
+    border-radius: 40px 40px 0 0;
+    background-color: var(--color-ink);
+    color: #95afb0;
+    padding-block: clamp(3.5rem, 2.5rem + 4vw, 6rem) 0;
+  }
+
+  /* Filigrane de bas de page.
+     La marque, en très grand et à peine visible : 4,5 % de blanc sur l'encre.
+     Elle occupe le vide au lieu de le laisser nu, sans rien réclamer — si on la
+     remarque, c'est qu'elle est trop contrastée.
+     Le corps est en vw pour que le mot occupe toujours la largeur de l'écran,
+     quelle qu'elle soit. */
+  .footer-watermark {
+    display: block;
+    margin-top: clamp(2rem, 1rem + 4vw, 4rem);
+    /* Marge négative : les lettres se font couper par le bord bas, ce qui
+       donne l'impression qu'elles émergent de la page. */
+    margin-bottom: -0.14em;
+    font-family: var(--font-sans);
+    font-size: clamp(3rem, 11.5vw, 15rem);
+    font-weight: 600;
+    letter-spacing: -0.055em;
+    line-height: 0.85;
+    text-align: center;
+    color: rgb(255 255 255 / 0.045);
+    user-select: none;
+    pointer-events: none;
+  }
+  .footer-grid {
+    display: grid;
+    gap: 2.5rem 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 900px) {
+    .footer-grid {
+      grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
+      gap: 2rem;
+    }
+  }
+  .footer-baseline {
+    max-width: 26ch;
+    margin-top: 1.25rem;
+    font-size: var(--nav-text);
+    letter-spacing: -0.02em;
+    line-height: 1.5;
+  }
+  .footer-col h3 {
+    margin-bottom: 1rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-gold);
+  }
+  .footer-col a,
+  .footer-col span {
+    display: block;
+    padding: 0.3rem 0;
+    font-size: 0.92rem;
+    letter-spacing: -0.02em;
+    color: #b9d3d4;
+    transition: color 180ms var(--ease-nav);
+  }
+  .footer-col a:hover {
+    color: var(--color-white);
+  }
+  .footer-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+    padding-top: 1.5rem;
+    border-top: 1px solid #17454a;
+    font-size: 0.83rem;
+    letter-spacing: -0.02em;
+  }
+
+  /* ==========================================================================
+     ÉCOSYSTÈME — bandeau encre, trois briques du groupe
+     ========================================================================== */
+  .eco {
+    background-color: var(--color-ink);
+    color: #b9d3d4;
+    padding-block: clamp(3.5rem, 2.5rem + 4vw, 6.5rem);
+  }
+  .eco .section-eyebrow {
+    border-color: #17454a;
+    background-color: transparent;
+    color: var(--color-gold);
+  }
+  .eco .section-title {
+    color: #f0f8f8;
+  }
+  .eco .section-sub {
+    color: #95afb0;
+  }
+  .eco-grid {
+    display: grid;
+    gap: var(--nav-gutter);
+  }
+  @media (min-width: 900px) {
+    .eco-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .eco-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.75rem 1.6rem 1.9rem;
+    border-radius: 24px;
+    border: 1px solid #17454a;
+    background-color: rgb(255 255 255 / 0.03);
+    transition:
+      border-color 250ms var(--ease-nav),
+      background-color 250ms var(--ease-nav);
+  }
+  .eco-card:hover {
+    border-color: var(--color-teal-hi);
+    background-color: rgb(255 255 255 / 0.06);
+  }
+  .eco-mark {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 14px;
+    background-color: var(--color-teal);
+    color: var(--color-white);
+  }
+  .eco-mark svg {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+  .eco-name {
+    margin-top: 1.25rem;
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: -0.05em;
+    color: #f0f8f8;
+  }
+  .eco-role {
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-gold);
+  }
+  .eco-claim {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #17454a;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.3;
+    color: #d9ecec;
+  }
+  .eco-text {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    letter-spacing: -0.02em;
+    line-height: 1.55;
+    color: #95afb0;
+  }
+  .eco-note {
+    max-width: 60ch;
+    margin: clamp(2rem, 1.5rem + 2vw, 3rem) auto 0;
+    text-align: center;
+    font-size: var(--nav-text);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.4;
+    color: #d9ecec;
+  }
+
+  /* ==========================================================================
+     COUVERTURE — villes par pays
+     ========================================================================== */
+  .coverage-grid {
+    display: grid;
+    gap: 2rem var(--nav-gutter);
+  }
+  @media (min-width: 800px) {
+    .coverage-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .coverage-country {
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--color-ink);
+  }
+  .coverage-country h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--color-ink);
+  }
+  .coverage-cities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .city-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  /* Ouvert : sarcelle pleine. À venir : contour seul. La différence se lit sans
+     avoir à consulter la légende. */
+  .city-pill.-ouvert {
+    background-color: var(--color-teal);
+    color: var(--color-white);
+  }
+  .city-pill.-bientot {
+    border: 1px dashed var(--color-line);
+    color: var(--color-muted);
+  }
+  .city-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 100%;
+    background-color: currentColor;
+  }
+  .coverage-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    font-size: 0.85rem;
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+  .coverage-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* ==========================================================================
+     FRAIS — le décompte d'une vente
+     ========================================================================== */
+  .fees-grid {
+    display: grid;
+    gap: var(--nav-gutter);
+  }
+  @media (min-width: 1000px) {
+    .fees-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .fee-card {
+    padding: 1.5rem 1.5rem 1.75rem;
+    border-radius: 24px;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-white);
+  }
+  .fee-card.-best {
+    border: 2px solid var(--color-teal);
+  }
+  .fee-plan {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .fee-plan strong {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--color-ink);
+  }
+  .fee-plan span {
+    font-size: 0.82rem;
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+  .fee-lines {
+    display: grid;
+    gap: 0.65rem;
+    margin: 1.25rem 0;
+    padding: 1.25rem 0;
+    border-block: 1px solid var(--color-line-soft);
+    font-size: 0.92rem;
+    letter-spacing: -0.02em;
+  }
+  .fee-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--color-body);
+  }
+  .fee-line b {
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+  .fee-line.-minus b {
+    color: var(--color-crit);
+  }
+  .fee-net span {
+    display: block;
+    font-size: 0.8rem;
+    letter-spacing: -0.02em;
+    color: var(--color-muted);
+  }
+  .fee-net strong {
+    display: block;
+    margin-top: 0.15rem;
+    font-family: var(--font-sans);
+    font-size: 1.9rem;
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 1;
+    color: var(--color-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .fees-not-charged {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+  }
+  @media (min-width: 800px) {
+    .fees-not-charged {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .fee-free {
+    display: grid;
+    grid-template-columns: 1.4rem 1fr;
+    gap: 0.85rem;
+    align-items: start;
+    padding: 1rem 1.15rem;
+    border-radius: 14px;
+    background-color: var(--color-alt);
+  }
+  .fee-free svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    margin-top: 0.1rem;
+    color: var(--color-ok);
+  }
+  .fee-free b {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--color-ink);
+  }
+  .fee-free span {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.85rem;
+    letter-spacing: -0.02em;
+    line-height: 1.45;
+    color: var(--color-muted);
+  }
+  .fees-pending {
+    max-width: 62ch;
+    margin: 2rem auto 0;
+    padding: 1.15rem 1.35rem;
+    border-radius: 14px;
+    border: 1px dashed var(--color-line);
+    text-align: center;
+    font-size: 0.88rem;
+    letter-spacing: -0.02em;
+    line-height: 1.55;
+    color: var(--color-muted);
+  }
+
+  /* ==========================================================================
+     PAGES INTÉRIEURES — en-tête, listing, manifeste
+     Vocabulaire relevé sur la page « réseau » de MindMarket : un listing dont
+     chaque entrée occupe une grande rangée séparée par un filet, et un bloc de
+     manifeste en très grand corps.
+     ========================================================================== */
+  .page-hero {
+    padding-block: calc(var(--nav-safe) + clamp(3rem, 2rem + 4vw, 6rem))
+      clamp(2.5rem, 2rem + 2vw, 4rem);
+  }
+  .page-hero-title {
+    max-width: 18ch;
+    font-family: var(--font-sans);
+    font-size: clamp(2.5rem, 1.6rem + 4vw, 5rem);
+    font-weight: 500;
+    letter-spacing: -0.06em;
+    line-height: 0.98;
+    color: var(--color-ink);
+  }
+  .page-hero-lede {
+    max-width: 46ch;
+    margin-top: 1.75rem;
+    font-size: clamp(1.05rem, 1rem + 0.4vw, 1.25rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.45;
+    color: var(--color-muted);
+  }
+
+  /* Listing : chaque entrée est une rangée pleine largeur, texte à gauche et
+     démonstration à droite, séparées par un filet. */
+  .listing {
+    border-radius: 35px;
+    background-color: var(--color-alt);
+    overflow: hidden;
+  }
+  @media (min-width: 1024px) {
+    .listing {
+      border-radius: 50px;
+    }
+  }
+  .listing-item + .listing-item {
+    border-top: 1px solid var(--color-line);
+  }
+  .listing-inner {
+    display: grid;
+    gap: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+    padding: clamp(2.5rem, 2rem + 3vw, 5rem) clamp(1.5rem, 1rem + 2vw, 3.5rem);
+    align-items: center;
+  }
+  @media (min-width: 900px) {
+    .listing-inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    /* Une rangée sur deux inverse l'ordre : sans ça, la page se lit comme une
+       colonne de texte doublée d'une colonne d'images. */
+    .listing-item:nth-child(even) .listing-visual {
+      order: -1;
+    }
+  }
+  .listing-index {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--color-brand);
+  }
+  .listing-name {
+    margin-top: 0.9rem;
+    font-family: var(--font-sans);
+    font-size: clamp(1.9rem, 1.4rem + 2vw, 2.9rem);
+    font-weight: 500;
+    letter-spacing: -0.06em;
+    line-height: 1;
+    color: var(--color-ink);
+  }
+  .listing-claim {
+    margin-top: 1rem;
+    max-width: 34ch;
+    font-size: clamp(1.02rem, 0.98rem + 0.3vw, 1.18rem);
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    line-height: 1.35;
+    color: var(--color-body);
+  }
+  .listing-text {
+    margin-top: 1rem;
+    max-width: 44ch;
+    font-size: var(--nav-text);
+    letter-spacing: -0.02em;
+    line-height: 1.6;
+    color: var(--color-muted);
+  }
+  .listing-points {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 1.75rem;
+  }
+  .listing-points li {
+    display: grid;
+    grid-template-columns: 1rem 1fr;
+    gap: 0.7rem;
+    align-items: start;
+    font-size: 0.92rem;
+    letter-spacing: -0.02em;
+    line-height: 1.5;
+    color: var(--color-body);
+  }
+  .listing-points svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    margin-top: 0.3rem;
+    color: var(--color-ok);
+  }
+  .listing-visual {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 5 / 4;
+    border-radius: 24px;
+    background-color: var(--color-white);
+    box-shadow: var(--shadow-mock);
+    overflow: hidden;
+  }
+
+  /* Onde des points de carte, relevée sur UPMAP : un anneau qui s'ouvre et
+     s'efface, 2,4 s, en boucle. Il matérialise une position vivante — sans lui,
+     un point sur une carte est une punaise. */
+  .pin-ring {
+    animation: pin-ring 2.4s var(--ease-pulse) infinite;
+    transform-origin: center;
+  }
+
+  /* Manifeste : un seul paragraphe, en très grand, qui porte la page. */
+  .manifesto {
+    max-width: 22ch;
+    font-family: var(--font-sans);
+    font-size: clamp(1.75rem, 1.2rem + 2.4vw, 3.25rem);
+    font-weight: 500;
+    letter-spacing: -0.06em;
+    line-height: 1.12;
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+  .manifesto-grid {
+    display: grid;
+    gap: clamp(2rem, 1.5rem + 2vw, 4rem);
+  }
+  @media (min-width: 1000px) {
+    .manifesto-grid {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+  .manifesto-body p {
+    max-width: 52ch;
+    font-size: var(--nav-text);
+    letter-spacing: -0.02em;
+    line-height: 1.7;
+    color: var(--color-body);
+  }
+  .manifesto-body p + p {
+    margin-top: 1.25rem;
+  }
+
+  /* Liste de refus : ce qu'on s'interdit se lit mieux barré qu'expliqué. */
+  .refusals {
+    display: grid;
+    gap: 0.75rem;
+  }
+  @media (min-width: 800px) {
+    .refusals {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .refusal {
+    padding: 1.35rem 1.5rem 1.5rem;
+    border-radius: 20px;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-white);
+  }
+  .refusal b {
+    display: block;
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--color-ink);
+    text-decoration: line-through;
+    text-decoration-color: var(--color-crit);
+    text-decoration-thickness: 2px;
+  }
+  .refusal span {
+    display: block;
+    margin-top: 0.6rem;
+    font-size: 0.92rem;
+    letter-spacing: -0.02em;
+    line-height: 1.55;
+    color: var(--color-muted);
   }
 
   /* Titre de page — .heading-lg chez eux : Inter 500, interlettrage −0,06 em,
@@ -1600,6 +2511,25 @@
   ::view-transition-group(*) {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
+  }
+}
+
+/* Le motif est rendu deux fois : à mi-course, la seconde copie occupe la place
+   de la première et la boucle est invisible. */
+@keyframes rail-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pin-ring {
+  from {
+    opacity: 0.55;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.4);
   }
 }
 
